@@ -19,6 +19,8 @@ Sistema web para gerenciamento do atendimento em um pronto-socorro, permitindo o
 - **Back-end:** Node.js.
 - **Banco de dados:** MySQL.
 
+
+
 ### 2. Pré-requisitos
 
 Antes de executar o projeto, instale ou configure:
@@ -26,6 +28,8 @@ Antes de executar o projeto, instale ou configure:
 - **Node.js e npm:** para executar o back-end e instalar suas dependências.
 - **MySQL Server ou uma ferramenta equivalente**, como o MySQL disponibilizado pelo XAMPP, para executar o banco de dados.
 - **MySQL Workbench ou outra ferramenta de gerenciamento**, como phpMyAdmin, para administrar o banco de dados.
+
+  
 
 ### 3. Configuração do banco de dados
 
@@ -38,6 +42,8 @@ Inicie o serviço do MySQL utilizando a ferramenta escolhida, como o XAMPP ou o 
 Execute o script de criação disponibilizado no arquivo `create.sql`, responsável pela criação do banco de dados e de suas tabelas.
 
 Certifique-se de que o script seja executado no ambiente MySQL configurado para o projeto.
+
+
 
 ### 4. Configuração do back-end
 
@@ -73,16 +79,17 @@ Após a inicialização, acesse o sistema pelo endereço:
 
 http://localhost:3000
 
+
+
 ### 5. Executar o front-end
 
 Com o servidor em execução, abra o navegador e acesse `http://localhost:3000`.
 
 As páginas HTML, os arquivos CSS e os scripts JavaScript são disponibilizados pelo servidor Node.js.
 
-### 6. Estrutura do projeto
 
-```text
-### Estrutura do projeto
+
+### 6. Estrutura do projeto
 
 ```text
 sistema-pronto-socorro/
@@ -109,6 +116,7 @@ sistema-pronto-socorro/
 │   └── config.js (local, não versionado)
 └── create.sql
 ```
+
 
 
 ### 7. Observações
