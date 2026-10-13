@@ -1,0 +1,12 @@
+{
+  "name": "pronto-socorro-backend",
+  "version": "1.0.0",
+  "description": "Back-end do Sistema de Atendimentos de Pronto Socorro (PI2 - Grupo 02)",
+  "main": "servidor.js",
+  "scripts": {
+    "start": "node servidor.js"
+  },
+  "dependencies": {
+    "mysql2": "^3.24.6"
+  }
+}
