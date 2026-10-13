@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronto Socorro - Paciente não encontrado</title>
+    <link rel="stylesheet" href="css/geral.css">
+    <link rel="stylesheet" href="css/recepcao.css">
+</head>
+<body>
+
+    <header class="barra">
+        <div class="barra-dentro">
+            <a class="logo" href="index.html">
+                <div class="logo-icone">
+                    <svg viewBox="0 0 24 24" fill="#fff"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>
+                </div>
+                <div>
+                    <p class="logo-nome">Pronto Socorro</p>
+                    <p class="logo-sub">Sistema de Atendimentos</p>
+                </div>
+            </a>
+
+            <nav class="menu">
+                <a href="index.html">Início</a>
+                <a class="ativo" href="recepcao.html">Recepção</a>
+                <a href="triagem.html">Triagem</a>
+                <a href="medico.html">Médico</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="conteudo">
+
+        <div class="painel aviso">
+            <div class="aviso-icone">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="4"/><path d="M3 21c0-3.5 3-6 7-6 1.2 0 2.3.2 3.2.6"/><path d="M16 15l5 5M21 15l-5 5"/></svg>
+            </div>
+            <h1>Paciente não encontrado</h1>
+            <p>Não existe nenhum paciente cadastrado com esse CPF.<br>Você pode fazer o cadastro agora ou tentar outro CPF.</p>
+
+            <div class="acoes">
+                <a class="botao" href="cadastro-paciente.html">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    Cadastrar paciente
+                </a>
+                <a class="botao botao-secundario" href="recepcao.html">Buscar outro CPF</a>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="rodape">
+        <div class="rodape-dentro">
+            <p>Sistema de Atendimentos de Pronto Socorro</p>
+            <p>Projeto Integrador II · Grupo 02</p>
+        </div>
+    </footer>
+
+</body>
+</html>
