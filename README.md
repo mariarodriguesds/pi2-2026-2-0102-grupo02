@@ -45,39 +45,57 @@ Certifique-se de que o script seja executado no ambiente MySQL configurado para 
 
 
 
-### 4. Configuração do back-end
+### 4. Configuração e execução do back-end
 
-#### 4.1. Instalar as dependências
+#### 4.1. Teste de conexão com o banco de dados
 
-Na raiz do projeto, execute:
+O projeto possui um back-end separado para testar a conexão com o banco de dados MySQL e verificar se é possível consultar uma tabela.
+
+Para executar o teste:
+
+1. Acesse a pasta `sistema-pronto-socorro/teste-conexao/`.
+2. Instale as dependências com o comando `npm install`.
+3. Configure o arquivo `config.js` com os dados de conexão com o MySQL, utilizando o arquivo de exemplo disponibilizado na pasta.
+4. Inicie o servidor de teste com o comando `node servidor.js`.
+5. Acesse a rota de teste configurada no servidor para verificar se a consulta ao banco de dados foi realizada com sucesso.
+
+Se o teste retornar uma resposta indicando que foi possível ler a tabela, a conexão foi estabelecida e o back-end de teste conseguiu acessar o banco de dados.
+
+Após concluir essa verificação, encerre o servidor de teste, caso ele utilize a mesma porta do sistema principal, e siga as instruções abaixo para executar a aplicação.
+
+#### 4.2. Instalar as dependências do sistema principal
+
+Acesse a pasta `sistema-pronto-socorro/pronto-socorro/` e execute:
 
 ```bash
 npm install
 ```
 
-#### 4.2. Configurar a conexão com o banco de dados
+#### 4.3. Configurar a conexão com o banco de dados
 
-Na pasta `javascript`, copie o arquivo `config.example.js` para `config.js` e preencha os dados de conexão com o MySQL da máquina.
+Na pasta `pronto-socorro/javascript/`, copie o arquivo `config.example.js` para `config.js` e preencha os dados de conexão com o MySQL da máquina.
 
-No PowerShell, execute na raiz do projeto:
+No PowerShell, estando na pasta `pronto-socorro/`, execute:
 
 ```powershell
-Copy-Item javascript/config.example.js JavaScript/config.js
+Copy-Item javascript/config.example.js javascript/config.js
 ```
 
-O arquivo `config.js` contém as configurações locais e não deve ser enviado ao GitHub.
+O arquivo `config.js` contém configurações locais e não deve ser enviado ao GitHub.
 
-#### 4.3. Iniciar o servidor
+#### 4.4. Iniciar o servidor principal
 
-Na raiz do projeto, execute:
+Ainda na pasta `pronto-socorro/`, execute:
 
 ```bash
 node javascript/servidor.js
 ```
 
-Após a inicialização, acesse o sistema pelo endereço:
+Com o servidor em execução, abra o navegador e acesse:
 
 http://localhost:3000
+
+As páginas HTML, os arquivos CSS e os scripts JavaScript são disponibilizados pelo servidor Node.js.
 
 
 
