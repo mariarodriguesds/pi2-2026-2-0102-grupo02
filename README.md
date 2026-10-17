@@ -41,7 +41,7 @@ Caso tenha o Git instalado, abra o terminal no local em que deseja salvar o proj
 git clone URL_DO_REPOSITORIO
 ```
 
-Substitua URL_DO_REPOSITORIO pela URL HTTPS do repositório no GitHub.
+Substitua ```URL_DO_REPOSITORIO``` pela ```URL HTTPS``` do repositório no GitHub.
 
 Após obter os arquivos, siga as etapas abaixo.
 
@@ -104,9 +104,9 @@ npm install
 
 #### 5.3. Configuração do sistema principal
 
-Na pasta pronto-socorro/javascript, crie uma cópia do arquivo ```textconfig.example.js``` e nomeie-a como ```textonfig.js```.
+Na pasta pronto-socorro/javascript, crie uma cópia do arquivo ```config.example.js``` e nomeie-a como ```config.js```.
 
-Preencha o arquivo ```textconfig.js``` com as informações de conexão do seu banco de dados MySQL.
+Preencha o arquivo ```config.js``` com as informações de conexão do seu banco de dados MySQL.
 
 Importante: os arquivos config.js devem conter as configurações locais de cada ambiente. Não compartilhe nem envie esses arquivos ao GitHub quando contiverem senhas ou outras informações privadas.
 
@@ -118,8 +118,8 @@ Abra o terminal na pasta sistema-pronto-socorro/pronto-socorro.
 
 Execute:
 
-```
-textnode javascript/servidor.js
+```text
+node javascript/servidor.js
 ```
 
 Abra o navegador e acesse:
@@ -162,8 +162,8 @@ sistema-pronto-socorro/
 ### 7. Observações
 
 - O serviço do MySQL deve estar em execução para que o sistema possa acessar o banco de dados.
-- As credenciais informadas nos arquivos ```textconfig.js``` devem corresponder às configurações do ambiente utilizado.
-- O arquivo ```textconfig.js``` deve permanecer fora do versionamento para proteger as credenciais.
+- As credenciais informadas nos arquivos ```config.js``` devem corresponder às configurações do ambiente utilizado.
+- O arquivo ```config.js``` deve permanecer fora do versionamento para proteger as credenciais.
 - Os dois servidores utilizam a porta 3000. Por isso, não devem ser executados simultaneamente na mesma porta.
-- O arquivo ```textconfig.example.js``` deve permanecer no repositório para orientar a configuração em outros computadores.
+- O arquivo ```config.example.js``` deve permanecer no repositório para orientar a configuração em outros computadores.
 
