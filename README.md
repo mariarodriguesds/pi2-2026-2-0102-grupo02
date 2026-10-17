@@ -21,90 +21,103 @@ Sistema web para gerenciamento do atendimento em um pronto-socorro, permitindo o
 
 
 
-### 2. Pré-requisitos
+### 2. Como obter o projeto
 
-Antes de executar o projeto, instale ou configure:
+#### Opção 1 — Download pelo GitHub
 
-- **Node.js e npm:** para executar o back-end e instalar suas dependências.
-- **MySQL Server ou uma ferramenta equivalente**, como o MySQL disponibilizado pelo XAMPP, para executar o banco de dados.
-- **MySQL Workbench ou outra ferramenta de gerenciamento**, como phpMyAdmin, para administrar o banco de dados.
+Acesse o repositório do projeto no GitHub.
 
-  
+Clique em Code → Download ZIP.
 
-### 3. Configuração do banco de dados
+Extraia o arquivo ZIP baixado.
 
-#### 3.1. Iniciar o MySQL
+Abra a pasta extraída e localize a pasta sistema-pronto-socorro.
 
-Inicie o serviço do MySQL utilizando a ferramenta escolhida, como o XAMPP ou o MySQL Server.
+#### Opção 2 — Clonar o repositório
 
-#### 3.2. Criar o banco de dados e as tabelas
+Caso tenha o Git instalado, abra o terminal no local em que deseja salvar o projeto e execute:
 
-Execute o script de criação disponibilizado no arquivo `create.sql`, responsável pela criação do banco de dados e de suas tabelas.
+git clone URL_DO_REPOSITORIO
 
-Certifique-se de que o script seja executado no ambiente MySQL configurado para o projeto.
+Substitua URL_DO_REPOSITORIO pela URL HTTPS do repositório no GitHub.
 
+Após obter os arquivos, siga as etapas abaixo.
 
+### 3. Pré-requisitos
 
-### 4. Configuração e execução do back-end
+Antes de executar o sistema, é necessário ter:
 
-#### 4.1. Teste de conexão com o banco de dados
+Node.js instalado.
 
-O projeto possui um back-end separado para testar a conexão com o banco de dados MySQL e verificar se é possível consultar uma tabela.
+MySQL instalado e em execução, diretamente ou por meio de uma ferramenta como o XAMPP.
 
-Para executar o teste:
+Uma ferramenta para administrar o banco de dados, como o MySQL Workbench ou o phpMyAdmin.
 
-1. Acesse a pasta `sistema-pronto-socorro/teste-conexao/`.
-2. Instale as dependências com o comando `npm install`.
-3. Configure o arquivo `config.js` com os dados de conexão com o MySQL, utilizando o arquivo de exemplo disponibilizado na pasta.
-4. Inicie o servidor de teste com o comando `node servidor.js`.
-5. Acesse a rota de teste configurada no servidor para verificar se a consulta ao banco de dados foi realizada com sucesso.
+### 4. Configuração do banco de dados
 
-Se o teste retornar uma resposta indicando que foi possível ler a tabela, a conexão foi estabelecida e o back-end de teste conseguiu acessar o banco de dados.
+Inicie o serviço do MySQL.
 
-Após concluir essa verificação, encerre o servidor de teste, caso ele utilize a mesma porta do sistema principal, e siga as instruções abaixo para executar a aplicação.
+Abra o MySQL Workbench, o phpMyAdmin ou outra ferramenta compatível.
 
-#### 4.2. Instalar as dependências do sistema principal
+Execute o script create.sql, localizado na pasta sistema-pronto-socorro, para criar a estrutura do banco de dados.
 
-Acesse a pasta `sistema-pronto-socorro/pronto-socorro/` e execute:
+Verifique se o banco de dados foi criado corretamente.
 
-```bash
+### 5. Configuração e execução
+
+#### 5.1. Teste de conexão com o banco de dados
+
+Essa etapa permite verificar se a conexão com o MySQL está funcionando.
+
+Abra o terminal na pasta sistema-pronto-socorro/teste-conexao.
+
+Instale as dependências:
+
 npm install
-```
 
-#### 4.3. Configurar a conexão com o banco de dados
+Crie o arquivo config.js a partir do arquivo config.example.js.
 
-Na pasta `pronto-socorro/javascript/`, copie o arquivo `config.example.js` para `config.js` e preencha os dados de conexão com o MySQL da máquina.
+Abra o arquivo config.js e preencha as informações de conexão com o MySQL, conforme a configuração do seu ambiente.
 
-No PowerShell, estando na pasta `pronto-socorro/`, execute:
+Inicie o servidor:
 
-```powershell
-Copy-Item javascript/config.example.js javascript/config.js
-```
+node servidor.js
 
-O arquivo `config.js` contém configurações locais e não deve ser enviado ao GitHub.
+Com o servidor em execução, acesse no navegador:
 
-#### 4.4. Iniciar o servidor principal
+http://localhost:3000/api/teste
 
-Ainda na pasta `pronto-socorro/`, execute:
+Se necessário, consulte a mensagem retornada para verificar se a conexão foi estabelecida.
 
-```bash
+#### 5.2. Instalação das dependências do sistema
+
+Abra outro terminal na pasta sistema-pronto-socorro/pronto-socorro.
+
+Instale as dependências:
+
+npm install
+
+#### 5.3. Configuração do sistema principal
+
+Na pasta pronto-socorro/javascript, crie uma cópia do arquivo config.example.js e nomeie-a como config.js.
+
+Preencha o arquivo config.js com as informações de conexão do seu banco de dados MySQL.
+
+Importante: os arquivos config.js devem conter as configurações locais de cada ambiente. Não compartilhe nem envie esses arquivos ao GitHub quando contiverem senhas ou outras informações privadas.
+
+#### 5.4. Execução do sistema principal
+
+Certifique-se de que o servidor de teste, caso esteja em execução, foi encerrado com Ctrl + C.
+
+Abra o terminal na pasta sistema-pronto-socorro/pronto-socorro.
+
+Execute:
+
 node javascript/servidor.js
-```
 
-Com o servidor em execução, abra o navegador e acesse:
+Abra o navegador e acesse:
 
 http://localhost:3000
-
-As páginas HTML, os arquivos CSS e os scripts JavaScript são disponibilizados pelo servidor Node.js.
-
-
-
-### 5. Executar o front-end
-
-Com o servidor em execução, abra o navegador e acesse `http://localhost:3000`.
-
-As páginas HTML, os arquivos CSS e os scripts JavaScript são disponibilizados pelo servidor Node.js.
-
 
 
 ### 6. Estrutura do projeto
@@ -139,8 +152,9 @@ sistema-pronto-socorro/
 
 ### 7. Observações
 
-- O serviço do MySQL deve estar em execução para que as operações com o banco de dados funcionem.
-- Os dados de conexão devem corresponder à configuração local do MySQL.
-- O arquivo `config.js` deve permanecer fora do versionamento para proteger as credenciais.
-- O arquivo `config.example.js` deve ser mantido no repositório para orientar a configuração em outras máquinas.
+- O serviço do MySQL deve estar em execução para que o sistema possa acessar o banco de dados.
+- As credenciais informadas nos arquivos config.js devem corresponder às configurações do ambiente utilizado.
+- O arquivo config.js deve permanecer fora do versionamento para proteger as credenciais.
+- Os dois servidores utilizam a porta 3000. Por isso, não devem ser executados simultaneamente na mesma porta.
+- O arquivo config.example.js deve permanecer no repositório para orientar a configuração em outros computadores.
 
