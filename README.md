@@ -74,7 +74,7 @@ Instale as dependências:
 npm install
 ```
 
-Crie o arquivo ```textconfig.js``` a partir do arquivo ```config.example.js```.
+Crie o arquivo ```config.js``` a partir do arquivo ```config.example.js```.
 
 Abra o arquivo config.js e preencha as informações de conexão com o MySQL, conforme a configuração do seu ambiente.
 
