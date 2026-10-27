@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronto Socorro - Cadastrar paciente</title>
+    <link rel="stylesheet" href="css/geral.css">
+    <link rel="stylesheet" href="css/recepcao.css">
+</head>
+<body>
+
+    <header class="barra">
+        <div class="barra-dentro">
+            <a class="logo" href="index.html">
+                <div class="logo-icone">
+                    <svg viewBox="0 0 24 24" fill="#fff"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>
+                </div>
+                <div>
+                    <p class="logo-nome">Pronto Socorro</p>
+                    <p class="logo-sub">Sistema de Atendimentos</p>
+                </div>
+            </a>
+
+            <nav class="menu">
+                <a href="index.html">Início</a>
+                <a class="ativo" href="recepcao.html">Recepção</a>
+                <a href="triagem.html">Triagem</a>
+                <a href="medico.html">Médico</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="conteudo">
+
+        <div class="cabecalho-pagina">
+            <div class="trilha"><a href="index.html">Início</a> / <a href="recepcao.html">Recepção</a> / Cadastrar paciente</div>
+            <h1>Cadastrar paciente</h1>
+            <p>Preencha os dados do paciente. Os campos com * são obrigatórios.</p>
+        </div>
+
+        <div class="painel">
+            <form id="formCadastroPaciente" class="cadastro">
+
+                <div class="cadastro-grade">
+                    <div class="grupo grupo-inteiro">
+                        <label for="nome_completo">Nome completo <strong class="obrigatorio">*</strong></label>
+                        <input type="text" id="nome_completo" maxlength="150" required>
+                    </div>
+
+                    <div class="grupo">
+                        <label for="cpf">CPF <strong class="obrigatorio">*</strong></label>
+                        <input type="text" id="cpf" placeholder="000.000.000-00" maxlength="14" required>
+                    </div>
+
+                    <div class="grupo">
+                        <label for="rg">RG</label>
+                        <input type="text" id="rg" maxlength="20">
+                    </div>
+
+                    <div class="grupo">
+                        <label for="data_nascimento">Data de nascimento</label>
+                        <input type="date" id="data_nascimento">
+                    </div>
+
+                    <div class="grupo">
+                        <label for="telefone">Telefone</label>
+                        <input type="tel" id="telefone" placeholder="(00) 00000-0000" maxlength="15">
+                    </div>
+
+                    <div class="grupo">
+                        <label for="nome_mae">Nome da mãe</label>
+                        <input type="text" id="nome_mae" maxlength="150">
+                    </div>
+
+                    <div class="grupo">
+                        <label for="nome_pai">Nome do pai</label>
+                        <input type="text" id="nome_pai" maxlength="150">
+                    </div>
+
+                    <div class="grupo grupo-inteiro">
+                        <label for="endereco">Endereço</label>
+                        <input type="text" id="endereco" placeholder="Rua, número, bairro, cidade" maxlength="255">
+                    </div>
+                </div>
+
+                <p id="mensagem"></p>
+
+                <div class="cadastro-botoes">
+                    <a class="botao botao-secundario" href="recepcao.html">Cancelar</a>
+                    <button type="submit" class="botao">Cadastrar</button>
+                </div>
+
+            </form>
+        </div>
+
+    </main>
+
+    <footer class="rodape">
+        <div class="rodape-dentro">
+            <p>Sistema de Atendimentos de Pronto Socorro</p>
+            <p>Projeto Integrador II · Grupo 02</p>
+        </div>
+    </footer>
+
+    <script src="/script.js"></script>
+</body>
+</html>
