@@ -48,6 +48,89 @@ async function buscarPacientePorCPF(cpf) {
     return linhas[0];
 }
 
+// H05.1 - Abre um atendimento para o paciente
+// O número (AT0001, AT0002...) é gerado aqui, nunca digitado.
+// A data e hora de chegada são gravadas com NOW() do MySQL.
+// Se o número já existir, o UNIQUE do banco recusa e dá erro.
+async function abrirAtendimento(idPaciente) {
+
+    // Pega o maior id e soma 1 para montar o próximo número
+    const [ultimo] = await conexao.execute(
+        'SELECT MAX(id_atendimento) AS maior FROM atendimento'
+    );
+
+    var proximo = 1;
+
+    if (ultimo[0].maior) {
+        proximo = ultimo[0].maior + 1;
+    }
+
+    // Completa com zeros: 1 vira AT0001
+    var numero = 'AT' + String(proximo).padStart(4, '0');
+
+    await conexao.execute(
+        `INSERT INTO atendimento
+            (numero_atendimento, id_paciente, data_hora_chegada)
+         VALUES (?, ?, NOW())`,
+        [numero, idPaciente]
+    );
+
+    return numero;
+}
+
+// H06.1 - Busca atendimentos pelo número (AT0001) ou pelo CPF do paciente
+async function buscarAtendimentos(numeroOuCpf) {
+    var sql = `
+        SELECT
+            a.numero_atendimento AS numero,
+            a.data_hora_chegada AS dataHoraChegada,
+            a.status AS status,
+            p.id_paciente AS idPaciente,
+            p.nome_completo AS nome,
+            p.cpf AS cpf
+        FROM atendimento a
+        JOIN paciente p ON p.id_paciente = a.id_paciente
+    `;
+
+    var valor;
+
+    if (/^AT\d+$/i.test(numeroOuCpf)) {
+        sql += ' WHERE a.numero_atendimento = ?';
+        valor = numeroOuCpf.toUpperCase();
+    } else {
+        sql += ' WHERE p.cpf = ?';
+        valor = numeroOuCpf.replace(/\D/g, '');
+    }
+
+    // Um paciente pode ter vários atendimentos: o mais recente primeiro
+    sql += ' ORDER BY a.data_hora_chegada DESC';
+
+    const [linhas] = await conexao.execute(sql, [valor]);
+
+    return linhas;
+}
+
+// Lê o corpo (JSON) enviado pelo front
+function lerCorpo(req) {
+    return new Promise(function (resolve, reject) {
+        var corpo = '';
+
+        req.on('data', function (parte) {
+            corpo += parte;
+        });
+
+        req.on('end', function () {
+            try {
+                resolve(JSON.parse(corpo || '{}'));
+            } catch (erro) {
+                reject(erro);
+            }
+        });
+
+        req.on('error', reject);
+    });
+}
+
 // Envia uma resposta em JSON
 function responderJSON(res, status, dados) {
     res.writeHead(status, {
@@ -175,6 +258,119 @@ http.createServer(async function (req, res) {
 
             responderJSON(res, 500, {
                 mensagem: 'Erro ao consultar paciente.'
+            });
+        }
+
+        return;
+    }
+
+    // H05.1 - Abre atendimento
+    // Corpo esperado: { "idPaciente": 1 }
+    if (
+        req.method === 'POST' &&
+        caminho === '/api/atendimentos'
+    ) {
+
+        var dados;
+
+        try {
+            dados = await lerCorpo(req);
+        } catch (erro) {
+            responderJSON(res, 400, {
+                mensagem: 'Dados inválidos.'
+            });
+
+            return;
+        }
+
+        var idPaciente = Number(dados.idPaciente);
+
+        if (!idPaciente || idPaciente <= 0) {
+            responderJSON(res, 400, {
+                mensagem: 'Informe o paciente do atendimento.'
+            });
+
+            return;
+        }
+
+        try {
+            const [pacientes] = await conexao.execute(
+                'SELECT id_paciente FROM paciente WHERE id_paciente = ?',
+                [idPaciente]
+            );
+
+            if (pacientes.length === 0) {
+                responderJSON(res, 404, {
+                    mensagem: 'Paciente não encontrado.'
+                });
+
+                return;
+            }
+
+            var numero = await abrirAtendimento(idPaciente);
+
+            responderJSON(res, 201, {
+                mensagem: 'Atendimento aberto.',
+                numero: numero
+            });
+
+        } catch (erro) {
+            console.error(
+                'Erro ao abrir atendimento:',
+                erro.message
+            );
+
+            responderJSON(res, 500, {
+                mensagem: 'Erro ao abrir atendimento.'
+            });
+        }
+
+        return;
+    }
+
+    // H06.1 - Consulta atendimento pelo número ou pelo CPF
+    // Exemplos: /api/atendimentos/AT0001  ou  /api/atendimentos/12345678901
+    if (
+        req.method === 'GET' &&
+        caminho.startsWith('/api/atendimentos/')
+    ) {
+
+        var busca = (caminho.split('/')[3] || '').trim();
+        var ehNumero = /^AT\d+$/i.test(busca);
+        var ehCpf = busca.replace(/\D/g, '').length === 11;
+
+        if (!ehNumero && !ehCpf) {
+            responderJSON(res, 400, {
+                mensagem: 'Informe o número do atendimento (ex: AT0001) ou um CPF com 11 dígitos.'
+            });
+
+            return;
+        }
+
+        try {
+            var atendimentos = await buscarAtendimentos(busca);
+
+            if (atendimentos.length === 0) {
+                responderJSON(res, 404, {
+                    mensagem: 'Nenhum atendimento encontrado.'
+                });
+
+                return;
+            }
+
+            responderJSON(res, 200, {
+                mensagem: 'Atendimento encontrado.',
+                atendimentos: atendimentos
+            });
+
+        } catch (erro) {
+            console.error(
+                'Erro ao consultar atendimento:',
+                erro.message
+            );
+
+            responderJSON(res, 500, {
+                mensagem: 'Erro ao consultar atendimento.'
             });
         }
 
