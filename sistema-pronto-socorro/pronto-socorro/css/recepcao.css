@@ -176,9 +176,62 @@
     margin-top: 28px;
 }
 
+/* Abrir atendimento */
+.atendimento {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #e2e8f0;
+}
+
+#mensagemAtendimento {
+    margin: 16px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #fdecee;
+    border: 1px solid #f5c2c7;
+    color: #a4161a;
+    font-weight: 500;
+}
+
+#mensagemAtendimento:empty {
+    display: none;
+}
+
+.atendimento-aberto {
+    margin-top: 20px;
+    padding: 24px;
+    text-align: center;
+    border-radius: 12px;
+    background: #e8f7ee;
+    border: 1px solid #bbe5cb;
+    color: #14532d;
+}
+
+.atendimento-aberto h2 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.atendimento-aberto p {
+    margin: 0;
+    font-size: 14px;
+}
+
+#numeroAtendimento {
+    margin: 0 0 8px;
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
 /* Celular */
 @media (max-width: 640px) {
     .busca-linha .botao {
+        width: 100%;
+    }
+
+    .atendimento .botao {
         width: 100%;
     }
 

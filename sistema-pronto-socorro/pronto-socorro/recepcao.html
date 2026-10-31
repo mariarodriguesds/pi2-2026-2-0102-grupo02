@@ -55,6 +55,21 @@
             </form>
 
             <div id="resultado"></div>
+
+            <div id="areaAtendimento" class="atendimento" hidden>
+                <button type="button" id="botaoAbrirAtendimento" class="botao">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    Abrir atendimento
+                </button>
+
+                <p id="mensagemAtendimento"></p>
+
+                <div id="atendimentoAberto" class="atendimento-aberto" hidden>
+                    <h2>Atendimento aberto</h2>
+                    <p id="numeroAtendimento"></p>
+                    <p>Informe este número ao paciente.</p>
+                </div>
+            </div>
         </div>
 
     </main>
