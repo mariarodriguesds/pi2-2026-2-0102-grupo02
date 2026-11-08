@@ -70,9 +70,9 @@ async function abrirAtendimento(idPaciente) {
 
     await conexao.execute(
         `INSERT INTO atendimento
-            (numero_atendimento, id_paciente, data_hora_chegada)
-         VALUES (?, ?, NOW())`,
-        [numero, idPaciente]
+            (numero_atendimento, id_paciente, data_hora_chegada, status)
+         VALUES (?, ?, NOW(), ?)`,
+        [numero, idPaciente, 'AGUARDANDO_TRIAGEM']
     );
 
     return numero;
@@ -109,6 +109,29 @@ async function buscarAtendimentos(numeroOuCpf) {
 
     return linhas;
 }
+
+
+// H07.1 - Lista atendimentos aguardando triagem
+async function listarAtendimentosAguardandoTriagem() {
+    const sql = `
+        SELECT
+            a.numero_atendimento AS numero,
+            a.data_hora_chegada AS dataHoraChegada,
+            a.status AS status,
+            p.id_paciente AS idPaciente,
+            p.nome_completo AS nome,
+            p.cpf AS cpf
+        FROM atendimento a
+        JOIN paciente p ON p.id_paciente = a.id_paciente
+        WHERE a.status = 'AGUARDANDO_TRIAGEM'
+        ORDER BY a.numero_atendimento ASC
+    `;
+
+    const [linhas] = await conexao.execute(sql);
+
+    return linhas;
+}
+
 
 // Lê o corpo (JSON) enviado pelo front
 function lerCorpo(req) {
@@ -150,6 +173,7 @@ function enviarArquivo(res, caminho) {
     var paginas = {
         '/index.html': 'index.html',
         '/recepcao.html': 'recepcao.html',
+        '/cadastro-paciente.html': 'cadastro-paciente.html',
         '/paciente-nao-encontrado.html':
             'paciente-nao-encontrado.html',
 
@@ -199,6 +223,12 @@ function enviarArquivo(res, caminho) {
     });
 }
 
+
+
+
+
+
+
 http.createServer(async function (req, res) {
 
     var caminho;
@@ -218,7 +248,7 @@ http.createServer(async function (req, res) {
     // Consulta paciente pelo CPF
     if (
         req.method === 'GET' &&
-        caminho.startsWith('/api/pacientes/')
+        caminho.startsWith('/api/paciente/')
     ) {
 
         var cpf = caminho.split('/')[3] || '';
@@ -294,12 +324,12 @@ http.createServer(async function (req, res) {
         }
 
         try {
-            const [pacientes] = await conexao.execute(
+            const [paciente] = await conexao.execute(
                 'SELECT id_paciente FROM paciente WHERE id_paciente = ?',
                 [idPaciente]
             );
 
-            if (pacientes.length === 0) {
+            if (paciente.length === 0) {
                 responderJSON(res, 404, {
                     mensagem: 'Paciente não encontrado.'
                 });
@@ -322,6 +352,30 @@ http.createServer(async function (req, res) {
 
             responderJSON(res, 500, {
                 mensagem: 'Erro ao abrir atendimento.'
+            });
+        }
+
+        return;
+    }
+
+    // Listar atendimentos aguardando triagem
+    if (
+        req.method === "GET" &&
+        caminho === "/api/atendimentos/aguardando-triagem"
+    ) {
+        try {
+            const atendimentos = await listarAtendimentosAguardandoTriagem();
+
+            responderJSON(res, 200, {
+                mensagem: "Atendimentos aguardando triagem.",
+                atendimentos
+            });
+
+        } catch (erro) {
+            console.error("Erro ao listar atendimentos:", erro);
+
+            responderJSON(res, 500, {
+                mensagem: "Erro ao listar atendimentos aguardando triagem."
             });
         }
 
@@ -376,6 +430,290 @@ http.createServer(async function (req, res) {
 
         return;
     }
+
+    if (req.method === "POST" &&
+        caminho === "/api/paciente") {
+
+        try {
+
+            var dados = await lerCorpo(req);
+
+            var nome = String(
+                dados.nome_completo || ""
+            ).trim();
+
+            var cpf = String(
+                dados.cpf || ""
+            ).replace(/\D/g, "");
+
+            var rg = dados.rg
+                ? String(dados.rg).trim() || null
+                : null;
+
+            var nascimento = dados.data_nascimento || null;
+
+            var pai = dados.nome_pai
+                ? String(dados.nome_pai).trim() || null
+                : null;
+
+            var mae = dados.nome_mae
+                ? String(dados.nome_mae).trim() || null
+                : null;
+
+            var enderecoPaciente = dados.endereco
+                ? String(dados.endereco).trim() || null
+                : null;
+
+            var telefone = String(
+                dados.telefone || ""
+            ).replace(/\D/g, "");
+
+            if (!nome || !cpf) {
+                responderJSON(res, 400, {
+                    mensagem: "Informe o nome completo e o CPF."
+                });
+                return;
+            }
+
+            if (nome.length > 150) {
+                responderJSON(res, 400, {
+                    mensagem: "O nome deve ter no máximo 150 caracteres."
+                });
+                return;
+            }
+
+            if (!/^\d{11}$/.test(cpf)) {
+                responderJSON(res, 400, {
+                    mensagem: "Informe um CPF com 11 dígitos."
+                });
+                return;
+            }
+
+            if (nascimento) {
+                var data = new Date(nascimento + "T00:00:00Z");
+
+                var hoje = new Date();
+                var dataAtual = new Date(Date.UTC(
+                    hoje.getFullYear(),
+                    hoje.getMonth(),
+                    hoje.getDate()
+                ));
+
+                if (
+                    !/^\d{4}-\d{2}-\d{2}$/.test(nascimento) ||
+                    isNaN(data.getTime()) ||
+                    data.toISOString().slice(0, 10) !== nascimento ||
+                    data > dataAtual
+                ) {
+                    responderJSON(res, 400, {
+                        mensagem: "Informe uma data de nascimento válida."
+                    });
+                    return;
+                }
+            }
+
+            if (telefone && !/^\d{10,11}$/.test(telefone)) {
+                responderJSON(res, 400, {
+                    mensagem: "Informe um telefone com DDD válido."
+                });
+                return;
+            }
+
+            var resultado = await conexao.execute(
+                "SELECT cpf FROM paciente WHERE cpf = ? LIMIT 1",
+                [cpf]
+            );
+
+            if (resultado[0].length > 0) {
+                responderJSON(res, 409, {
+                    mensagem: "CPF já cadastrado."
+                });
+                return;
+            }
+
+            await conexao.execute(
+                `INSERT INTO paciente
+                (nome_completo, cpf, rg, data_nascimento,
+                 nome_pai, nome_mae, endereco, telefone)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    nome,
+                    cpf,
+                    rg,
+                    nascimento,
+                    pai,
+                    mae,
+                    enderecoPaciente,
+                    telefone || null
+                ]
+            );
+
+            responderJSON(res, 201, {
+                mensagem: "Paciente cadastrado com sucesso."
+            });
+
+        } catch (erro) {
+            console.error("Erro ao cadastrar paciente:", erro);
+
+            if (erro instanceof SyntaxError) {
+                responderJSON(res, 400, {
+                    mensagem: "Os dados enviados são inválidos."
+                });
+                return;
+            }
+
+            if (erro.code === "ER_DUP_ENTRY") {
+                responderJSON(res, 409, {
+                    mensagem: "CPF já cadastrado."
+                });
+                return;
+            }
+
+            responderJSON(res, 500, {
+                mensagem: "Erro ao cadastrar paciente no banco de dados."
+            });
+        }
+
+        return;
+    }
+
+
+    if (req.method === "PUT" &&
+        /^\/api\/paciente\/\d+$/.test(caminho)) {
+
+        try {
+            var id = Number(caminho.split("/")[3]);
+            var dados = await lerCorpo(req);
+
+            var nome = String(dados.nome_completo || "").trim();
+            var cpf = String(dados.cpf || "").replace(/\D/g, "");
+
+            if (!Number.isSafeInteger(id) || id <= 0 ||
+                !nome || !/^\d{11}$/.test(cpf)) {
+                responderJSON(res, 400, {
+                    mensagem: "Informe um paciente válido, nome e CPF com 11 dígitos."
+                });
+                return;
+            }
+
+            if (nome.length > 150) {
+                responderJSON(res, 400, {
+                    mensagem: "O nome deve ter no máximo 150 caracteres."
+                });
+                return;
+            }
+
+            var rg = dados.rg
+                ? String(dados.rg).trim() || null
+                : null;
+
+            var nascimento = dados.data_nascimento || null;
+            var pai = dados.nome_pai
+                ? String(dados.nome_pai).trim() || null
+                : null;
+
+            var mae = dados.nome_mae
+                ? String(dados.nome_mae).trim() || null
+                : null;
+
+            var enderecoPaciente = dados.endereco
+                ? String(dados.endereco).trim() || null
+                : null;
+
+            var telefone = String(dados.telefone || "")
+                .replace(/\D/g, "");
+
+            if (nascimento) {
+                var data = new Date(nascimento + "T00:00:00Z");
+
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(nascimento) ||
+                    isNaN(data.getTime()) ||
+                    data.toISOString().slice(0, 10) !== nascimento) {
+                    responderJSON(res, 400, {
+                        mensagem: "Data de nascimento inválida."
+                    });
+                    return;
+                }
+            }
+
+            if (telefone && !/^\d{10,11}$/.test(telefone)) {
+                responderJSON(res, 400, {
+                    mensagem: "Informe um telefone com DDD válido."
+                });
+                return;
+            }
+
+            var pacienteAtual = await conexao.execute(
+                "SELECT id_paciente FROM paciente WHERE id_paciente = ? LIMIT 1",
+                [id]
+            );
+
+            if (pacienteAtual[0].length === 0) {
+                responderJSON(res, 404, {
+                    mensagem: "Paciente não encontrado."
+                });
+                return;
+            }
+
+            var cpfExistente = await conexao.execute(
+                "SELECT id_paciente FROM paciente WHERE cpf = ? AND id_paciente <> ? LIMIT 1",
+                [cpf, id]
+            );
+
+            if (cpfExistente[0].length > 0) {
+                responderJSON(res, 409, {
+                    mensagem: "Este CPF já está cadastrado para outro paciente."
+                });
+                return;
+            }
+
+            await conexao.execute(
+                `UPDATE paciente
+                 SET nome_completo = ?, cpf = ?, rg = ?, data_nascimento = ?,
+                     nome_pai = ?, nome_mae = ?, endereco = ?, telefone = ?
+                 WHERE id_paciente = ?`,
+                [
+                    nome,
+                    cpf,
+                    rg,
+                    nascimento,
+                    pai,
+                    mae,
+                    enderecoPaciente,
+                    telefone || null,
+                    id
+                ]
+            );
+
+            responderJSON(res, 200, {
+                mensagem: "Dados pessoais alterados com sucesso."
+            });
+
+        } catch (erro) {
+            console.error("Erro ao alterar paciente:", erro);
+
+            if (erro.code === "ER_DUP_ENTRY") {
+                responderJSON(res, 409, {
+                    mensagem: "Este CPF já está cadastrado para outro paciente."
+                });
+                return;
+            }
+
+            if (erro instanceof SyntaxError) {
+                responderJSON(res, 400, {
+                    mensagem: "Os dados enviados são inválidos."
+                });
+                return;
+            }
+
+            responderJSON(res, 500, {
+                mensagem: "Erro ao alterar os dados pessoais."
+            });
+        }
+
+        return;
+    }
+
 
     // Entrega as páginas e os arquivos estáticos
     if (req.method === 'GET') {
