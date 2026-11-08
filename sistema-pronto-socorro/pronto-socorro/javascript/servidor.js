@@ -3,26 +3,7 @@ var http = require('http');
 var fs = require('fs');
 var path = require('path');
 
-// Verifica se as dependências foram instaladas na pasta do projeto
-if (!fs.existsSync(path.join(__dirname, '..', 'node_modules'))) {
-    console.error('Pasta node_modules não encontrada.');
-    console.error('Execute npm.cmd install mysql2 na pasta Pronto Socorro.');
-    process.exit(1);
-}
-
-// Verifica se existe o arquivo de configuração
-if (!fs.existsSync(path.join(__dirname, 'config.js'))) {
-    console.error('Arquivo config.js não encontrado.');
-    console.error('Crie esse arquivo dentro da pasta JavaScript.');
-    process.exit(1);
-}
-
-var mysql = require('mysql2/promise');
-var config = require('./config');
-
-// Conexão com o MySQL
-var conexao = mysql.createPool(config.banco);
-
+function criarServidor(conexao) {
 // Caminho da pasta principal do projeto
 var PASTA_FRONT = path.join(__dirname, '..');
 
@@ -32,8 +13,8 @@ async function buscarPacientePorCPF(cpf) {
         SELECT
             id_paciente AS id,
             nome_completo AS nome,
-            cpf AS cpf,
-            data_nascimento AS dataNascimento
+            cpf AS cpf, rg, nome_pai, nome_mae, endereco, telefone,
+            DATE_FORMAT(data_nascimento, '%Y-%m-%d') AS dataNascimento
         FROM paciente
         WHERE cpf = ?
         LIMIT 1
@@ -153,7 +134,10 @@ function enviarArquivo(res, caminho) {
         '/paciente-nao-encontrado.html':
             'paciente-nao-encontrado.html',
 
-        '/script.js': 'JavaScript/script.js',
+        '/script.js': 'javascript/script.js',
+        '/cadastro-paciente.html': 'cadastro-paciente.html',
+        '/editar-paciente.html': 'editar-paciente.html',
+        '/triagem.html': 'triagem.html',
 
         '/css/geral.css': 'css/geral.css',
         '/css/inicio.css': 'css/inicio.css',
@@ -199,7 +183,7 @@ function enviarArquivo(res, caminho) {
     });
 }
 
-http.createServer(async function (req, res) {
+return http.createServer(async function (req, res) {
 
     var caminho;
 
@@ -215,6 +199,313 @@ http.createServer(async function (req, res) {
         return;
     }
 
+    if (req.method === "POST" &&
+        caminho === "/api/pacientes") {
+
+        try {
+            var dados = await lerCorpo(req);
+            if (!dados || typeof dados !== 'object' || Array.isArray(dados)) throw new SyntaxError();
+            const limites = { rg: 20, nome_pai: 150, nome_mae: 150, endereco: 255, telefone: 20 };
+            if (Object.entries(limites).some(([campo, max]) => String(dados[campo] || '').length > max)) {
+                responderJSON(res, 400, { mensagem: 'Um dos campos excede o limite permitido.' }); return;
+            }
+
+            var nome = String(
+                dados.nome_completo || ""
+            ).trim();
+
+            var cpf = String(
+                dados.cpf || ""
+            ).replace(/\D/g, "");
+
+            var rg = dados.rg
+                ? String(dados.rg).trim() || null
+                : null;
+
+            var nascimento = dados.data_nascimento || null;
+
+            var pai = dados.nome_pai
+                ? String(dados.nome_pai).trim() || null
+                : null;
+
+            var mae = dados.nome_mae
+                ? String(dados.nome_mae).trim() || null
+                : null;
+
+            var enderecoPaciente = dados.endereco
+                ? String(dados.endereco).trim() || null
+                : null;
+
+            var telefone = String(
+                dados.telefone || ""
+            ).replace(/\D/g, "");
+
+            if (!nome || !cpf) {
+                responderJSON(res, 400, {
+                    mensagem: "Informe o nome completo e o CPF."
+                });
+                return;
+            }
+
+            if (nome.length > 150) {
+                responderJSON(res, 400, {
+                    mensagem: "O nome deve ter no máximo 150 caracteres."
+                });
+                return;
+            }
+
+            if (!/^\d{11}$/.test(cpf)) {
+                responderJSON(res, 400, {
+                    mensagem: "Informe um CPF com 11 dígitos."
+                });
+                return;
+            }
+
+            if (nascimento) {
+                var data = new Date(nascimento + "T00:00:00Z");
+
+                var hoje = new Date();
+                var dataAtual = new Date(Date.UTC(
+                    hoje.getFullYear(),
+                    hoje.getMonth(),
+                    hoje.getDate()
+                ));
+
+                if (
+                    !/^\d{4}-\d{2}-\d{2}$/.test(nascimento) ||
+                    isNaN(data.getTime()) ||
+                    data.toISOString().slice(0, 10) !== nascimento ||
+                    data > dataAtual
+                ) {
+                    responderJSON(res, 400, {
+                        mensagem: "Informe uma data de nascimento válida."
+                    });
+                    return;
+                }
+            }
+
+            if (telefone && !/^\d{10,11}$/.test(telefone)) {
+                responderJSON(res, 400, {
+                    mensagem: "Informe um telefone com DDD válido."
+                });
+                return;
+            }
+
+            var resultado = await conexao.execute(
+                "SELECT cpf FROM paciente WHERE cpf = ? LIMIT 1",
+                [cpf]
+            );
+
+            if (resultado[0].length > 0) {
+                responderJSON(res, 409, {
+                    mensagem: "CPF já cadastrado."
+                });
+                return;
+            }
+
+            await conexao.execute(
+                `INSERT INTO paciente
+                (nome_completo, cpf, rg, data_nascimento,
+                 nome_pai, nome_mae, endereco, telefone)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    nome,
+                    cpf,
+                    rg,
+                    nascimento,
+                    pai,
+                    mae,
+                    enderecoPaciente,
+                    telefone || null
+                ]
+            );
+
+            responderJSON(res, 201, {
+                mensagem: "Paciente cadastrado com sucesso."
+            });
+
+        } catch (erro) {
+            console.error("Erro ao cadastrar paciente:", erro);
+
+            if (erro instanceof SyntaxError) {
+                responderJSON(res, 400, {
+                    mensagem: "Os dados enviados são inválidos."
+                });
+                return;
+            }
+
+            if (erro.code === "ER_DUP_ENTRY") {
+                responderJSON(res, 409, {
+                    mensagem: "CPF já cadastrado."
+                });
+                return;
+            }
+
+            responderJSON(res, 500, {
+                mensagem: "Erro ao cadastrar paciente no banco de dados."
+            });
+        }
+
+        return;
+    }
+
+    // 2. Editar paciente
+    if (req.method === "PUT" &&
+        /^\/api\/pacientes\/\d+$/.test(caminho)) {
+
+        try {
+            var id = Number(caminho.split("/")[3]);
+            var dados = await lerCorpo(req);
+            if (!dados || typeof dados !== 'object' || Array.isArray(dados)) throw new SyntaxError();
+            const limites = { rg: 20, nome_pai: 150, nome_mae: 150, endereco: 255, telefone: 20 };
+            if (Object.entries(limites).some(([campo, max]) => String(dados[campo] || '').length > max)) {
+                responderJSON(res, 400, { mensagem: 'Um dos campos excede o limite permitido.' }); return;
+            }
+
+            var nome = String(dados.nome_completo || "").trim();
+            var cpf = String(dados.cpf || "").replace(/\D/g, "");
+
+            if (!Number.isSafeInteger(id) || id <= 0 ||
+                !nome || !/^\d{11}$/.test(cpf)) {
+                responderJSON(res, 400, {
+                    mensagem: "Informe um paciente válido, nome e CPF com 11 dígitos."
+                });
+                return;
+            }
+
+            if (nome.length > 150) {
+                responderJSON(res, 400, {
+                    mensagem: "O nome deve ter no máximo 150 caracteres."
+                });
+                return;
+            }
+
+            var rg = dados.rg
+                ? String(dados.rg).trim() || null
+                : null;
+
+            var nascimento = dados.data_nascimento || null;
+            var pai = dados.nome_pai
+                ? String(dados.nome_pai).trim() || null
+                : null;
+
+            var mae = dados.nome_mae
+                ? String(dados.nome_mae).trim() || null
+                : null;
+
+            var enderecoPaciente = dados.endereco
+                ? String(dados.endereco).trim() || null
+                : null;
+
+            var telefone = String(dados.telefone || "")
+                .replace(/\D/g, "");
+
+            if (nascimento) {
+                var data = new Date(nascimento + "T00:00:00Z");
+
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(nascimento) ||
+                    isNaN(data.getTime()) ||
+                    data.toISOString().slice(0, 10) !== nascimento || data > new Date()) {
+                    responderJSON(res, 400, {
+                        mensagem: "Data de nascimento inválida."
+                    });
+                    return;
+                }
+            }
+
+            if (telefone && !/^\d{10,11}$/.test(telefone)) {
+                responderJSON(res, 400, {
+                    mensagem: "Informe um telefone com DDD válido."
+                });
+                return;
+            }
+
+            var pacienteAtual = await conexao.execute(
+                "SELECT id_paciente FROM paciente WHERE id_paciente = ? LIMIT 1",
+                [id]
+            );
+
+            if (pacienteAtual[0].length === 0) {
+                responderJSON(res, 404, {
+                    mensagem: "Paciente não encontrado."
+                });
+                return;
+            }
+
+            var cpfExistente = await conexao.execute(
+                "SELECT id_paciente FROM paciente WHERE cpf = ? AND id_paciente <> ? LIMIT 1",
+                [cpf, id]
+            );
+
+            if (cpfExistente[0].length > 0) {
+                responderJSON(res, 409, {
+                    mensagem: "Este CPF já está cadastrado para outro paciente."
+                });
+                return;
+            }
+
+            await conexao.execute(
+                `UPDATE paciente
+                 SET nome_completo = ?, cpf = ?, rg = ?, data_nascimento = ?,
+                     nome_pai = ?, nome_mae = ?, endereco = ?, telefone = ?
+                 WHERE id_paciente = ?`,
+                [
+                    nome,
+                    cpf,
+                    rg,
+                    nascimento,
+                    pai,
+                    mae,
+                    enderecoPaciente,
+                    telefone || null,
+                    id
+                ]
+            );
+
+            responderJSON(res, 200, {
+                mensagem: "Dados pessoais alterados com sucesso."
+            });
+        } catch (erro) {
+            console.error("Erro ao alterar paciente:", erro);
+
+            if (erro.code === "ER_DUP_ENTRY") {
+                responderJSON(res, 409, {
+                    mensagem: "Este CPF já está cadastrado para outro paciente."
+                });
+                return;
+            }
+
+            if (erro instanceof SyntaxError) {
+                responderJSON(res, 400, {
+                    mensagem: "Os dados enviados são inválidos."
+                });
+                return;
+            }
+
+            responderJSON(res, 500, {
+                mensagem: "Erro ao alterar os dados pessoais."
+            });
+        }
+
+        return;
+    }
+
+    // H07.3: a abertura na recepção alimenta a fila sem duplicar dados.
+    if (req.method === 'GET' && caminho === '/api/triagem/pendentes') {
+        try {
+            const [atendimentos] = await conexao.execute(`SELECT a.id_atendimento AS id,
+                a.numero_atendimento AS numero, a.data_hora_chegada AS dataHoraChegada,
+                p.nome_completo AS nome, p.cpf FROM atendimento a
+                JOIN paciente p ON p.id_paciente = a.id_paciente
+                LEFT JOIN triagem t ON t.id_atendimento = a.id_atendimento
+                WHERE a.status = 'ABERTO' AND t.id_triagem IS NULL
+                ORDER BY a.data_hora_chegada, a.id_atendimento`);
+            responderJSON(res, 200, { atendimentos });
+        } catch (erro) {
+            responderJSON(res, 500, { mensagem: 'Erro ao consultar fila de triagem.' });
+        }
+        return;
+    }
     // Consulta paciente pelo CPF
     if (
         req.method === 'GET' &&
@@ -283,9 +574,9 @@ http.createServer(async function (req, res) {
             return;
         }
 
-        var idPaciente = Number(dados.idPaciente);
+        var idPaciente = Number(dados && dados.idPaciente);
 
-        if (!idPaciente || idPaciente <= 0) {
+        if (!Number.isSafeInteger(idPaciente) || idPaciente <= 0) {
             responderJSON(res, 400, {
                 mensagem: 'Informe o paciente do atendimento.'
             });
@@ -389,8 +680,13 @@ http.createServer(async function (req, res) {
 
     res.end('404 Not Found');
 
-}).listen(config.porta, function () {
-    console.log(
-        'Servidor rodando em http://localhost:' + config.porta
-    );
 });
+}
+module.exports = { criarServidor };
+if (require.main === module) {
+ const mysql = require('mysql2/promise');
+ const config = require('./config');
+ criarServidor(mysql.createPool(config.banco)).listen(config.porta, () => {
+  console.log('Servidor rodando em http://localhost:' + config.porta);
+ });
+}

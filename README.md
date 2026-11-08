@@ -167,3 +167,24 @@ sistema-pronto-socorro/
 - Os dois servidores utilizam a porta 3000. Por isso, não devem ser executados simultaneamente na mesma porta.
 - O arquivo ```config.example.js``` deve permanecer no repositório para orientar a configuração em outros computadores.
 
+
+## Atualizações: triagem e integração da recepção
+
+O modelo lógico e as regras de migração estão em [docs/modelo-logico-triagem.md](docs/modelo-logico-triagem.md).
+
+- Base nova: execute create.sql com MySQL 8.0.16+ ou MariaDB 10.2.1+ para garantir o CHECK das cinco cores.
+- Base existente: execute sistema-pronto-socorro/migrations/001_triagem.sql uma vez; não execute create.sql novamente. Confira as instruções sobre dados legados no modelo lógico.
+- Recepção: busque um CPF, cadastre ou edite o paciente e abra o atendimento. O número aparece na tela; o atendimento passa a constar em /triagem.html.
+- Triagem: a fila atualiza automaticamente a cada 15 segundos e pelo botão Atualizar lista.
+
+Na pasta sistema-pronto-socorro/pronto-socorro, execute npm test para os testes HTTP com banco em memória. Eles verificam cadastro, edição, mudança de CPF, busca, validações, abertura e presença na fila, além da entrega das páginas. Não substituem a validação SQL real.
+
+Para verificar FK, unicidade e as cinco cores em um banco real já inicializado, configure javascript/config.js e execute no PowerShell:
+
+```powershell
+$env:TESTAR_BANCO = '1'
+npm test
+Remove-Item Env:TESTAR_BANCO
+```
+
+O teste de banco usa uma transação e desfaz os registros ao finalizar (o contador AUTO_INCREMENT pode avançar). Sem TESTAR_BANCO=1, esse teste fica explicitamente ignorado.

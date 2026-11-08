@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronto Socorro - Triagem</title>
+    <link rel="stylesheet" href="css/geral.css">
+    <link rel="stylesheet" href="css/recepcao.css">
+</head>
+<body>
+
+    <header class="barra">
+        <div class="barra-dentro">
+            <a class="logo" href="index.html">
+                <div class="logo-icone">
+                    <svg viewBox="0 0 24 24" fill="#fff"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>
+                </div>
+                <div>
+                    <p class="logo-nome">Pronto Socorro</p>
+                    <p class="logo-sub">Sistema de Atendimentos</p>
+                </div>
+            </a>
+
+            <nav class="menu">
+                <a href="index.html">Início</a>
+                <a href="recepcao.html">Recepção</a>
+                <a class="ativo" href="triagem.html">Triagem</a>
+                <a href="medico.html">Médico</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="conteudo">
+
+        <div class="cabecalho-pagina"><h1>Aguardando triagem</h1>
+        <p>Atendimentos abertos na recepção, em ordem de chegada.</p></div>
+        <div class="painel"><button class="botao" id="atualizarFila">Atualizar lista</button>
+        <p id="mensagemFila" role="status"></p><div id="filaTriagem" aria-live="polite"></div></div>
+    </main>
+
+    <footer class="rodape">
+        <div class="rodape-dentro">
+            <p>Sistema de Atendimentos de Pronto Socorro</p>
+            <p>Projeto Integrador II · Grupo 02</p>
+        </div>
+    </footer>
+
+    <script src="/script.js"></script>
+</body>
+</html>
