@@ -37,7 +37,7 @@ CREATE TABLE atendimento (
     numero_atendimento          VARCHAR(20)    NOT NULL,          -- Ex: AT0001
     id_paciente                 INT             NOT NULL,
     data_hora_chegada           DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status                      ENUM('ABERTO','CONFIRMADO','CANCELADO') NOT NULL DEFAULT 'ABERTO',
+    status                      ENUM('ABERTO','AGUARDANDO_TRIAGEM','AGUARDANDO_MEDICO','CONFIRMADO','CANCELADO') NOT NULL DEFAULT 'ABERTO',
     
     -- Dados da Triagem (Enfermagem)
     pressao_arterial            VARCHAR(15)     NULL,              -- Ex: 128/84
