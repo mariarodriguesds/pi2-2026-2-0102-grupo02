@@ -174,6 +174,7 @@ function enviarArquivo(res, caminho) {
         '/index.html': 'index.html',
         '/recepcao.html': 'recepcao.html',
         '/cadastro-paciente.html': 'cadastro-paciente.html',
+        '/triagem.html': 'triagem.html',
         '/paciente-nao-encontrado.html':
             'paciente-nao-encontrado.html',
 
@@ -222,10 +223,6 @@ function enviarArquivo(res, caminho) {
         res.end(data);
     });
 }
-
-
-
-
 
 
 
@@ -572,6 +569,156 @@ http.createServer(async function (req, res) {
             responderJSON(res, 500, {
                 mensagem: "Erro ao cadastrar paciente no banco de dados."
             });
+        }
+
+        return;
+    }
+
+
+    // H07.2 - Grava a triagem e H09.2 - encaminha para o médico
+    if (req.method === "POST" && caminho === "/api/triagem") {
+
+        var dados;
+
+        try {
+            dados = await lerCorpo(req);
+        } catch (erro) {
+            responderJSON(res, 400, {
+                mensagem: "Dados inválidos."
+            });
+            return;
+        }
+
+        var idAtendimento = Number(dados.idAtendimento);
+
+        var pressaoArterial = dados.pressaoArterial || null;
+        var temperatura = dados.temperatura || null;
+        var batimentosCardiacos = dados.batimentosCardiacos || null;
+
+        var classificacaoManchester = String(
+            dados.classificacaoManchester || ""
+        ).trim().toUpperCase();
+
+        var principaisQueixas = String(
+            dados.principaisQueixas || ""
+        ).trim() || null;
+
+        if (!idAtendimento || idAtendimento <= 0) {
+            responderJSON(res, 400, {
+                mensagem: "Informe o atendimento da triagem."
+            });
+            return;
+        }
+
+        if (![
+            "VERMELHO",
+            "LARANJA",
+            "AMARELO",
+            "VERDE",
+            "AZUL"
+        ].includes(classificacaoManchester)) {
+            responderJSON(res, 400, {
+                mensagem: "Classificação de Manchester inválida."
+            });
+            return;
+        }
+
+        var conexaoTriagem;
+
+        try {
+
+            conexaoTriagem = await conexao.getConnection();
+
+            await conexaoTriagem.beginTransaction();
+
+            const [atendimento] = await conexaoTriagem.execute(
+                `SELECT id_atendimento, status
+                FROM atendimento
+                WHERE id_atendimento = ?
+                FOR UPDATE`,
+                [idAtendimento]
+            );
+
+            if (atendimento.length === 0) {
+
+                await conexaoTriagem.rollback();
+
+                responderJSON(res, 404, {
+                    mensagem: "Atendimento não encontrado."
+                });
+
+                return;
+            }
+
+            if (atendimento[0].status !== "AGUARDANDO_TRIAGEM") {
+
+                await conexaoTriagem.rollback();
+
+                responderJSON(res, 409, {
+                    mensagem: "Este atendimento não está aguardando triagem."
+                });
+
+                return;
+            }
+
+            await conexaoTriagem.execute(
+                `INSERT INTO triagem
+                    (id_atendimento, pressao_arterial, temperatura,
+                    batimentos_cardiacos, classificacao_manchester,
+                    principais_queixas)
+                VALUES (?, ?, ?, ?, ?, ?)`,
+                [
+                    idAtendimento,
+                    pressaoArterial,
+                    temperatura,
+                    batimentosCardiacos,
+                    classificacaoManchester,
+                    principaisQueixas
+                ]
+            );
+
+            await conexaoTriagem.execute(
+                `UPDATE atendimento
+                SET status = 'AGUARDANDO_MEDICO'
+                WHERE id_atendimento = ?`,
+                [idAtendimento]
+            );
+
+            await conexaoTriagem.commit();
+
+            responderJSON(res, 201, {
+                mensagem: "Triagem registrada com sucesso. Atendimento encaminhado para o médico."
+            });
+
+        } catch (erro) {
+
+            if (conexaoTriagem) {
+                try {
+                    await conexaoTriagem.rollback();
+                } catch (erroRollback) {
+                    console.error("Erro ao desfazer a transação:", erroRollback);
+                }
+            }
+
+            console.error("Erro ao gravar triagem:", erro);
+
+            if (erro.code === "ER_DUP_ENTRY") {
+                responderJSON(res, 409, {
+                    mensagem: "Este atendimento já possui uma triagem."
+                });
+                return;
+            }
+
+            responderJSON(res, 500, {
+                mensagem: "Erro ao gravar a triagem."
+            });
+
+        } finally {
+
+            if (conexaoTriagem) {
+                conexaoTriagem.release();
+            }
+
         }
 
         return;
