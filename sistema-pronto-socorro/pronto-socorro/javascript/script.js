@@ -514,4 +514,60 @@ if (botaoAbrirAtendimento) {
 
     });
 
+
+    
+
+}
+
+// H07.2 - Grava a triagem
+
+const formularioTriagem =
+    document.getElementById("formTriagem");
+
+if (formularioTriagem) {
+
+    formularioTriagem.addEventListener("submit", async function (evento) {
+
+        evento.preventDefault();
+
+        try {
+
+            const resposta = await fetch("/api/triagem", {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    idAtendimento: document.getElementById("ID_ATENDIMENTO").value,
+                    pressaoArterial: document.getElementById("PRESSAO_ARTERIAL").value,
+                    temperatura: document.getElementById("TEMPERATURA").value,
+                    batimentosCardiacos: document.getElementById("BATIMENTOS_CARDIACOS").value,
+                    classificacaoManchester: document.getElementById("CLASSIFICACAO_MANCHESTER").value,
+                    principaisQueixas: document.getElementById("PRINCIPAIS_QUEIXAS").value
+                })
+            });
+
+            const dados = await resposta.json();
+
+            if (!resposta.ok) {
+                alert(dados.mensagem || "Erro ao registrar a triagem.");
+                return;
+            }
+
+            alert(dados.mensagem);
+
+            formularioTriagem.reset();
+
+        } catch (erro) {
+
+            console.error("Erro ao registrar triagem:", erro);
+
+            alert("Erro ao conectar com o servidor.");
+
+        }
+
+    });
+
 }
