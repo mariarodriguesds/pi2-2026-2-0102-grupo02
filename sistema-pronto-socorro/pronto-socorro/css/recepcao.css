@@ -323,6 +323,32 @@
     color: #0f172a;
 }
 
+/* Editar paciente */
+#mensagemBusca,
+#mensagemEdicao {
+    margin: 20px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #f6f8fb;
+    border: 1px solid #e2e8f0;
+    font-weight: 500;
+}
+
+#mensagemBusca:empty,
+#mensagemEdicao:empty {
+    display: none;
+}
+
+.edicao {
+    margin-top: 24px;
+}
+
+.edicao h2 {
+    margin: 0 0 20px;
+    font-size: 20px;
+    font-weight: 800;
+}
+
 /* Link para a consulta */
 .atalho {
     margin: 20px 0 0;
