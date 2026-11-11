@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronto Socorro - Consultar atendimento</title>
+    <link rel="stylesheet" href="css/geral.css">
+    <link rel="stylesheet" href="css/recepcao.css">
+</head>
+<body>
+
+    <header class="barra">
+        <div class="barra-dentro">
+            <a class="logo" href="index.html">
+                <div class="logo-icone">
+                    <svg viewBox="0 0 24 24" fill="#fff"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>
+                </div>
+                <div>
+                    <p class="logo-nome">Pronto Socorro</p>
+                    <p class="logo-sub">Sistema de Atendimentos</p>
+                </div>
+            </a>
+
+            <nav class="menu">
+                <a href="index.html">Início</a>
+                <a class="ativo" href="recepcao.html">Recepção</a>
+                <a href="triagem.html">Triagem</a>
+                <a href="medico.html">Médico</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="conteudo">
+
+        <div class="cabecalho-pagina">
+            <div class="trilha"><a href="index.html">Início</a> / <a href="recepcao.html">Recepção</a> / Consultar atendimento</div>
+            <h1>Consultar atendimento</h1>
+            <p>Digite o número do atendimento ou o CPF do paciente.</p>
+        </div>
+
+        <div class="painel">
+            <form id="formConsultaAtendimento" class="busca">
+                <label for="busca">Número do atendimento ou CPF</label>
+                <div class="busca-linha">
+                    <div class="campo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+                        <input type="text" id="busca" placeholder="AT0001 ou 000.000.000-00" maxlength="14" autocomplete="off" required>
+                    </div>
+                    <button type="submit" class="botao">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+                        Buscar
+                    </button>
+                </div>
+                <p class="dica">Pelo CPF aparecem todos os atendimentos do paciente, do mais recente para o mais antigo.</p>
+            </form>
+
+            <p id="mensagemConsulta"></p>
+            <div id="listaAtendimentos"></div>
+        </div>
+
+    </main>
+
+    <footer class="rodape">
+        <div class="rodape-dentro">
+            <p>Sistema de Atendimentos de Pronto Socorro</p>
+            <p>Projeto Integrador II · Grupo 02</p>
+        </div>
+    </footer>
+
+    <template id="modeloAtendimento">
+        <article class="ficha-atendimento">
+            <div class="ficha-topo">
+                <h2 class="ficha-numero"></h2>
+                <p class="situacao"></p>
+            </div>
+            <div class="ficha-dados">
+                <p>Paciente <strong class="ficha-nome"></strong></p>
+                <p>CPF <strong class="ficha-cpf"></strong></p>
+                <p>Chegada <strong class="ficha-chegada"></strong></p>
+            </div>
+        </article>
+    </template>
+
+    <script src="/script.js"></script>
+</body>
+</html>

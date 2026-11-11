@@ -225,6 +225,117 @@
     letter-spacing: 0.04em;
 }
 
+/* Consulta de atendimento */
+#mensagemConsulta {
+    margin: 20px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #f6f8fb;
+    border: 1px solid #e2e8f0;
+    font-weight: 500;
+}
+
+#mensagemConsulta:empty {
+    display: none;
+}
+
+#listaAtendimentos {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+#listaAtendimentos:empty {
+    display: none;
+}
+
+.ficha-atendimento {
+    padding: 20px 24px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+}
+
+.ficha-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.ficha-numero {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.situacao {
+    margin: 0;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    background: #f6f8fb;
+    color: #64748b;
+}
+
+.situacao-aberto {
+    background: #fff4e5;
+    color: #ea8a0c;
+}
+
+.situacao-aguardando {
+    background: #e8f0fe;
+    color: #2563eb;
+}
+
+.situacao-confirmado {
+    background: #e8f7ee;
+    color: #16a34a;
+}
+
+.situacao-cancelado {
+    background: #fdecee;
+    color: #d62839;
+}
+
+.ficha-dados {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+}
+
+.ficha-dados p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.ficha-dados strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 16px;
+    color: #0f172a;
+}
+
+/* Link para a consulta */
+.atalho {
+    margin: 20px 0 0;
+    text-align: center;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.atalho a {
+    font-weight: 600;
+    color: #d62839;
+}
+
 /* Celular */
 @media (max-width: 640px) {
     .busca-linha .botao {
@@ -245,5 +356,9 @@
 
     .cadastro-botoes {
         flex-direction: column-reverse;
+    }
+
+    .ficha-dados {
+        grid-template-columns: 1fr;
     }
 }
