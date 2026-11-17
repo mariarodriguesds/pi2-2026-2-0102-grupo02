@@ -1,0 +1,79 @@
+/* Fila de triagem */
+.tabela {
+    overflow-x: auto;
+}
+
+.fila {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.fila th {
+    padding: 0 16px 12px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.fila td {
+    padding: 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.fila tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.fila tbody tr:hover {
+    background: #f6f8fb;
+}
+
+.fila-numero {
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.fila-nome {
+    font-weight: 600;
+}
+
+.fila-chegada {
+    color: #64748b;
+}
+
+.fila-acao {
+    text-align: right;
+}
+
+.botao-pequeno {
+    height: 40px;
+    padding: 0 18px;
+    font-size: 14px;
+}
+
+/* Aviso da fila */
+#mensagemFila {
+    margin: 20px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #f6f8fb;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    font-weight: 500;
+    color: #64748b;
+}
+
+#mensagemFila:empty {
+    display: none;
+}
+
+/* Celular */
+@media (max-width: 640px) {
+    .fila th,
+    .fila td {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+}
