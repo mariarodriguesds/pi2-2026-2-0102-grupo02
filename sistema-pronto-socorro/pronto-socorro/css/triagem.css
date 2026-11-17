@@ -69,11 +69,201 @@
     display: none;
 }
 
+/* Registrar triagem */
+.resumo-atendimento {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 28px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    background: #fff4e5;
+    border: 1px solid #fde1b8;
+}
+
+.resumo-atendimento p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.resumo-atendimento strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 18px;
+    color: #0f172a;
+}
+
+#formTriagem h2 {
+    margin: 28px 0 16px;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+#formTriagem h2:first-of-type {
+    margin-top: 0;
+}
+
+.sinais-grade {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+.grupo label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.grupo input,
+.grupo select,
+.grupo textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 16px;
+    color: #0f172a;
+    background: #f6f8fb;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.grupo input,
+.grupo select {
+    height: 48px;
+    padding: 0 14px;
+}
+
+.grupo textarea {
+    padding: 12px 14px;
+    resize: vertical;
+}
+
+.grupo input:focus,
+.grupo select:focus,
+.grupo textarea:focus {
+    outline: none;
+    background: #ffffff;
+    border-color: #d62839;
+    box-shadow: 0 0 0 4px rgba(214, 40, 57, 0.12);
+}
+
+.obrigatorio {
+    color: #d62839;
+}
+
+/* Unidade dentro do campo */
+.campo-unidade {
+    position: relative;
+}
+
+.campo-unidade input {
+    padding-right: 64px;
+}
+
+.unidade {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    text-decoration: none;
+    cursor: help;
+}
+
+/* Cores de Manchester */
+.manchester {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.manchester li {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border-left-width: 4px;
+    border-left-style: solid;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.manchester strong {
+    display: block;
+    color: #0f172a;
+}
+
+.cor-vermelho {
+    background: #fdecee;
+    border-color: #d62839;
+}
+
+.cor-laranja {
+    background: #fff4e5;
+    border-color: #ea8a0c;
+}
+
+.cor-amarelo {
+    background: #fef9c3;
+    border-color: #ca8a04;
+}
+
+.cor-verde {
+    background: #e8f7ee;
+    border-color: #16a34a;
+}
+
+.cor-azul {
+    background: #e8f0fe;
+    border-color: #2563eb;
+}
+
+#mensagemTriagem {
+    margin: 24px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #f6f8fb;
+    border: 1px solid #e2e8f0;
+    font-weight: 500;
+}
+
+#mensagemTriagem:empty {
+    display: none;
+}
+
+.triagem-botoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 28px;
+}
+
 /* Celular */
 @media (max-width: 640px) {
     .fila th,
     .fila td {
         padding-left: 8px;
         padding-right: 8px;
+    }
+
+    .resumo-atendimento {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .sinais-grade {
+        grid-template-columns: 1fr;
+    }
+
+    .manchester {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .triagem-botoes {
+        flex-direction: column-reverse;
     }
 }
