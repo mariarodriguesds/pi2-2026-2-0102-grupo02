@@ -173,29 +173,71 @@
     cursor: help;
 }
 
-/* Cores de Manchester */
+/* Escolha da cor de Manchester */
 .manchester {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-    margin: 12px 0 0;
+    gap: 10px;
+    margin: 0;
     padding: 0;
-    list-style: none;
+    border: none;
 }
 
-.manchester li {
-    padding: 10px 12px;
-    border-radius: 10px;
-    border-left-width: 4px;
-    border-left-style: solid;
-    font-size: 13px;
+.manchester legend {
+    margin-bottom: 8px;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.cor-opcao {
+    display: block;
+    position: relative;
+    padding: 14px 14px 14px 16px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    border-left-width: 6px;
+    font-size: 14px;
+    color: #0f172a;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.15s;
+}
+
+.cor-opcao:hover {
+    transform: translateY(-2px);
+}
+
+.cor-opcao input {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: #0f172a;
+}
+
+.cor-opcao strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 16px;
+}
+
+.cor-opcao small {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
     color: #64748b;
 }
 
-.manchester strong {
-    display: block;
-    color: #0f172a;
+/* Cor escolhida */
+.cor-opcao:has(input:checked) {
+    outline: 3px solid #0f172a;
+    outline-offset: 2px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.15);
 }
+
+/* Cores de Manchester */
 
 .cor-vermelho {
     background: #fdecee;
@@ -220,6 +262,86 @@
 .cor-azul {
     background: #e8f0fe;
     border-color: #2563eb;
+}
+
+/* Selo com a cor da classificação */
+.selo {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border-left-width: 4px;
+    border-left-style: solid;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.resumo-atendimento .selo {
+    display: block;
+    width: fit-content;
+    font-size: 14px;
+}
+
+/* Aguardando médico */
+.secao-aguardando {
+    margin-top: 28px;
+}
+
+.secao-aguardando h2 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.secao-dica {
+    margin: 0 0 20px;
+    font-size: 14px;
+    color: #64748b;
+}
+
+#mensagemAguardando {
+    margin: 20px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #f6f8fb;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    font-weight: 500;
+    color: #64748b;
+}
+
+#mensagemAguardando:empty {
+    display: none;
+}
+
+/* Regra da reclassificação */
+.regra {
+    margin: 0 0 24px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: #e8f0fe;
+    border: 1px solid #c7d7fb;
+    font-size: 14px;
+    color: #1e3a8a;
+}
+
+#mensagemReclassificacao {
+    margin: 24px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #f6f8fb;
+    border: 1px solid #e2e8f0;
+    font-weight: 500;
+}
+
+#mensagemReclassificacao:empty {
+    display: none;
+}
+
+#formReclassificacao h2 {
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 800;
 }
 
 #mensagemTriagem {

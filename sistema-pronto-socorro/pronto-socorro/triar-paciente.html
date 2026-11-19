@@ -75,25 +75,44 @@
                 </div>
 
                 <h2>Classificação de Manchester</h2>
-                <div class="grupo">
-                    <label for="CLASSIFICACAO_MANCHESTER">Prioridade <strong class="obrigatorio">*</strong></label>
-                    <select id="CLASSIFICACAO_MANCHESTER" required>
-                        <option value="">Selecione a cor</option>
-                        <option value="Vermelho">Vermelho - Emergência</option>
-                        <option value="Laranja">Laranja - Muito urgente</option>
-                        <option value="Amarelo">Amarelo - Urgente</option>
-                        <option value="Verde">Verde - Pouco urgente</option>
-                        <option value="Azul">Azul - Não urgente</option>
-                    </select>
-                </div>
+                <fieldset class="manchester">
+                    <legend>Prioridade <strong class="obrigatorio">*</strong></legend>
 
-                <ul class="manchester">
-                    <li class="cor-vermelho"><strong>Vermelho</strong> Imediato</li>
-                    <li class="cor-laranja"><strong>Laranja</strong> Até 10 min</li>
-                    <li class="cor-amarelo"><strong>Amarelo</strong> Até 60 min</li>
-                    <li class="cor-verde"><strong>Verde</strong> Até 120 min</li>
-                    <li class="cor-azul"><strong>Azul</strong> Até 240 min</li>
-                </ul>
+                    <label class="cor-opcao cor-vermelho">
+                        <input type="radio" name="CLASSIFICACAO_MANCHESTER" value="Vermelho" required>
+                        <strong>Vermelho</strong>
+                        Emergência
+                        <small>Imediato</small>
+                    </label>
+
+                    <label class="cor-opcao cor-laranja">
+                        <input type="radio" name="CLASSIFICACAO_MANCHESTER" value="Laranja">
+                        <strong>Laranja</strong>
+                        Muito urgente
+                        <small>Até 10 min</small>
+                    </label>
+
+                    <label class="cor-opcao cor-amarelo">
+                        <input type="radio" name="CLASSIFICACAO_MANCHESTER" value="Amarelo">
+                        <strong>Amarelo</strong>
+                        Urgente
+                        <small>Até 60 min</small>
+                    </label>
+
+                    <label class="cor-opcao cor-verde">
+                        <input type="radio" name="CLASSIFICACAO_MANCHESTER" value="Verde">
+                        <strong>Verde</strong>
+                        Pouco urgente
+                        <small>Até 120 min</small>
+                    </label>
+
+                    <label class="cor-opcao cor-azul">
+                        <input type="radio" name="CLASSIFICACAO_MANCHESTER" value="Azul">
+                        <strong>Azul</strong>
+                        Não urgente
+                        <small>Até 240 min</small>
+                    </label>
+                </fieldset>
 
                 <h2>Queixas</h2>
                 <div class="grupo">
