@@ -1,5 +1,7 @@
 # Modelo lógico — H08.1 e H09.1
 
+A versão completa do banco está em [Modelos do banco de dados](modelos-banco.md).
+
 `paciente` (1) → (N) `atendimento` (1) → (0..1) `triagem`.
 
 A chave primária de triagem é id_triagem. id_atendimento é uma chave estrangeira obrigatória e única: uma triagem pertence a exatamente um atendimento, e um atendimento pode aguardar triagem. A exclusão de atendimento com triagem é restringida. A reclassificação altera a classificação do mesmo registro.

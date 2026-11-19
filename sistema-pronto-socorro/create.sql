@@ -1,6 +1,6 @@
 -- =====================================================
--- H01.2 - Script de criação das tabelas
--- Paciente e Atendimento (Pronto Socorro)
+-- Pronto Socorro - esquema completo e dados fictícios
+-- Executar em uma instalação nova
 -- Compatível com MySQL 8.x / MariaDB
 -- =====================================================
 
@@ -73,3 +73,40 @@ CREATE TABLE triagem (
  ON DELETE RESTRICT ON UPDATE CASCADE,
  INDEX idx_triagem_classificacao (classificacao_manchester)
 ) ENGINE=InnoDB;
+
+ALTER TABLE atendimento
+    ADD COLUMN orientacoes TEXT NULL,
+    ADD COLUMN data_hora_cancelamento DATETIME NULL,
+    ADD COLUMN motivo_cancelamento TEXT NULL;
+
+CREATE TABLE medicacao (
+    id_medicacao INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id_atendimento INT NOT NULL,
+    nome VARCHAR(150) NOT NULL,
+    posologia VARCHAR(255) NULL,
+    CONSTRAINT fk_medicacao_atendimento FOREIGN KEY (id_atendimento)
+        REFERENCES atendimento (id_atendimento) ON DELETE RESTRICT ON UPDATE CASCADE,
+    INDEX idx_medicacao_atendimento (id_atendimento)
+) ENGINE=InnoDB;
+
+-- Exemplos fictícios para uma instalação nova.
+START TRANSACTION;
+INSERT INTO paciente (nome_completo, cpf) VALUES
+    ('Paciente Exemplo Um', '00000000001'), ('Paciente Exemplo Dois', '00000000002'),
+    ('Paciente Exemplo Três', '00000000003');
+INSERT INTO atendimento (numero_atendimento, id_paciente, data_hora_chegada)
+SELECT 'AT0001', id_paciente, CURRENT_TIMESTAMP - INTERVAL 30 MINUTE FROM paciente WHERE cpf = '00000000001'
+UNION ALL
+SELECT 'AT0002', id_paciente, CURRENT_TIMESTAMP - INTERVAL 20 MINUTE FROM paciente WHERE cpf = '00000000002'
+UNION ALL
+SELECT 'AT0003', id_paciente, CURRENT_TIMESTAMP - INTERVAL 10 MINUTE FROM paciente WHERE cpf = '00000000003';
+INSERT INTO triagem (id_atendimento, classificacao_manchester, data_hora_triagem)
+SELECT id_atendimento, 'AMARELO', data_hora_chegada + INTERVAL 5 MINUTE
+FROM atendimento WHERE numero_atendimento IN ('AT0001', 'AT0002');
+INSERT INTO atendimento (numero_atendimento, id_paciente, status, data_hora_confirmacao, orientacoes)
+SELECT 'AT0004', id_paciente, 'CONFIRMADO', CURRENT_TIMESTAMP, 'Orientação fictícia de exemplo.'
+FROM paciente WHERE cpf = '00000000001';
+INSERT INTO medicacao (id_atendimento, nome)
+SELECT id_atendimento, 'Medicação fictícia de exemplo'
+FROM atendimento WHERE numero_atendimento = 'AT0004';
+COMMIT;

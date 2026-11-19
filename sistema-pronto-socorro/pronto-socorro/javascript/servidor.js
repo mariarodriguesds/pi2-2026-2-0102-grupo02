@@ -66,6 +66,10 @@ async function buscarAtendimentos(numeroOuCpf) {
             a.numero_atendimento AS numero,
             a.data_hora_chegada AS dataHoraChegada,
             a.status AS status,
+            a.observacoes, a.orientacoes,
+            a.data_hora_confirmacao AS dataHoraAlta,
+            a.data_hora_cancelamento AS dataHoraCancelamento,
+            a.motivo_cancelamento AS motivoCancelamento,
             p.id_paciente AS idPaciente,
             p.nome_completo AS nome,
             p.cpf AS cpf
@@ -138,6 +142,7 @@ function enviarArquivo(res, caminho) {
         '/cadastro-paciente.html': 'cadastro-paciente.html',
         '/editar-paciente.html': 'editar-paciente.html',
         '/triagem.html': 'triagem.html',
+        '/medico.html': 'medico.html',
 
         '/css/geral.css': 'css/geral.css',
         '/css/inicio.css': 'css/inicio.css',
@@ -616,6 +621,120 @@ return http.createServer(async function (req, res) {
             });
         }
 
+        return;
+    }
+
+    if (req.method === 'GET' && caminho === '/api/medico/fila') {
+        try {
+            const [atendimentos] = await conexao.execute(`SELECT a.numero_atendimento AS numero,
+                p.nome_completo AS nome, t.classificacao_manchester AS cor,
+                t.data_hora_triagem AS dataHoraTriagem
+                FROM triagem t
+                JOIN atendimento a ON a.id_atendimento = t.id_atendimento
+                JOIN paciente p ON p.id_paciente = a.id_paciente
+                WHERE a.status = 'ABERTO'
+                ORDER BY CASE t.classificacao_manchester
+                    WHEN 'VERMELHO' THEN 1 WHEN 'LARANJA' THEN 2 WHEN 'AMARELO' THEN 3
+                    WHEN 'VERDE' THEN 4 WHEN 'AZUL' THEN 5 END,
+                    t.data_hora_triagem, t.id_triagem`);
+            responderJSON(res, 200, { atendimentos });
+        } catch (erro) {
+            responderJSON(res, 500, { mensagem: 'Erro ao consultar a fila médica.' });
+        }
+        return;
+    }
+
+    if (req.method === 'POST' && /^\/api\/triagem\/AT\d+$/i.test(caminho)) {
+        const numero = caminho.split('/').pop().toUpperCase();
+        try {
+            const dados = await lerCorpo(req);
+            const cores = ['VERMELHO', 'LARANJA', 'AMARELO', 'VERDE', 'AZUL'];
+            if (!cores.includes(dados?.cor)) throw new SyntaxError();
+            const [resultado] = await conexao.execute(`INSERT INTO triagem
+                (id_atendimento, classificacao_manchester)
+                SELECT id_atendimento, ? FROM atendimento
+                WHERE numero_atendimento = ? AND status = 'ABERTO'`, [dados.cor, numero]);
+            if (!resultado.affectedRows) {
+                responderJSON(res, 409, { mensagem: 'Atendimento indisponível para triagem.' });
+                return;
+            }
+            responderJSON(res, 201, { mensagem: 'Classificação registrada.' });
+        } catch (erro) {
+            if (erro instanceof SyntaxError) {
+                responderJSON(res, 400, { mensagem: 'Selecione uma cor válida.' });
+            } else if (erro.code === 'ER_DUP_ENTRY') {
+                responderJSON(res, 409, { mensagem: 'Este atendimento já foi triado.' });
+            } else {
+                responderJSON(res, 500, { mensagem: 'Erro ao registrar a triagem.' });
+            }
+        }
+        return;
+    }
+
+    if (req.method === 'PUT' && /^\/api\/atendimentos\/AT\d+$/i.test(caminho)) {
+        const numero = caminho.split('/').pop().toUpperCase();
+        try {
+            const dados = await lerCorpo(req);
+            const campos = ['idPaciente', 'status', 'observacoes', 'orientacoes', 'motivoCancelamento'];
+            const camposTexto = ['observacoes', 'orientacoes', 'motivoCancelamento'];
+            if (!dados || typeof dados !== 'object' || Array.isArray(dados) ||
+                Object.keys(dados).some(campo => !campos.includes(campo)) ||
+                camposTexto.some(campo => campo in dados && dados[campo] !== null &&
+                    (typeof dados[campo] !== 'string' || Buffer.byteLength(dados[campo]) > 65535))) {
+                throw new SyntaxError();
+            }
+
+            const [atual] = await buscarAtendimentos(numero);
+            if (!atual) {
+                responderJSON(res, 404, { mensagem: 'Atendimento não encontrado.' });
+                return;
+            }
+
+            const alterado = { ...atual, ...dados };
+            const { idPaciente, status, observacoes, orientacoes } = alterado;
+            const motivo = alterado.motivoCancelamento?.trim() || null;
+            if (!Number.isSafeInteger(idPaciente) || idPaciente <= 0 ||
+                !['ABERTO', 'CONFIRMADO', 'CANCELADO'].includes(status)) {
+                responderJSON(res, 400, { mensagem: 'Informe um paciente e um status válidos.' });
+                return;
+            }
+            if (atual.status !== 'ABERTO' && status !== atual.status) {
+                responderJSON(res, 409, { mensagem: 'O atendimento já foi encerrado.' });
+                return;
+            }
+            const exigeMotivo = status === 'CANCELADO' &&
+                (atual.status !== 'CANCELADO' || 'motivoCancelamento' in dados);
+            if ((exigeMotivo && !motivo) || (status !== 'CANCELADO' && motivo)) {
+                responderJSON(res, 400, { mensagem: 'Informe o motivo somente quando houver cancelamento.' });
+                return;
+            }
+
+            const confirmar = atual.status === 'ABERTO' && status === 'CONFIRMADO';
+            const cancelar = atual.status === 'ABERTO' && status === 'CANCELADO';
+            const [resultado] = await conexao.execute(`UPDATE atendimento SET
+                id_paciente = ?, observacoes = ?, orientacoes = ?, motivo_cancelamento = ?,
+                data_hora_confirmacao = IF(?, CURRENT_TIMESTAMP, data_hora_confirmacao),
+                data_hora_cancelamento = IF(?, CURRENT_TIMESTAMP, data_hora_cancelamento),
+                status = ?
+                WHERE numero_atendimento = ? AND status = ?
+                  AND id_paciente = ? AND observacoes <=> ? AND orientacoes <=> ?
+                  AND motivo_cancelamento <=> ?`,
+                [idPaciente, observacoes, orientacoes, motivo, confirmar, cancelar, status, numero, atual.status,
+                    atual.idPaciente, atual.observacoes, atual.orientacoes, atual.motivoCancelamento]);
+            if (!resultado.affectedRows) {
+                responderJSON(res, 409, { mensagem: 'O atendimento foi alterado. Consulte novamente.' });
+                return;
+            }
+            responderJSON(res, 200, { atendimentos: await buscarAtendimentos(numero) });
+        } catch (erro) {
+            if (erro instanceof SyntaxError) {
+                responderJSON(res, 400, { mensagem: 'Os campos enviados são inválidos.' });
+            } else if (erro.code === 'ER_NO_REFERENCED_ROW_2') {
+                responderJSON(res, 404, { mensagem: 'Paciente não encontrado.' });
+            } else {
+                responderJSON(res, 500, { mensagem: 'Erro ao alterar atendimento.' });
+            }
+        }
         return;
     }
 

@@ -57,7 +57,7 @@ Antes de executar o sistema, é necessário ter:
 
 - Inicie o serviço do MySQL.
 - Abra o MySQL Workbench, o phpMyAdmin ou outra ferramenta compatível.
-- Execute o script create.sql, localizado na pasta sistema-pronto-socorro, para criar a estrutura do banco de dados.
+- Em uma instalação nova, execute `sistema-pronto-socorro/create.sql` para criar a estrutura completa e carregar dados fictícios de exemplo.
 - Verifique se o banco de dados foi criado corretamente.
 
 ### 5. Configuração e execução
@@ -170,12 +170,14 @@ sistema-pronto-socorro/
 
 ## Atualizações: triagem e integração da recepção
 
-O modelo lógico e as regras de migração estão em [docs/modelo-logico-triagem.md](docs/modelo-logico-triagem.md).
+Os [modelos conceitual, lógico e físico](docs/modelos-banco.md) incluem o diagrama entidade-relacionamento. As regras para bases anteriores à triagem estão em [docs/modelo-logico-triagem.md](docs/modelo-logico-triagem.md).
 
 - Base nova: execute create.sql com MySQL 8.0.16+ ou MariaDB 10.2.1+ para garantir o CHECK das cinco cores.
-- Base existente: execute sistema-pronto-socorro/migrations/001_triagem.sql uma vez; não execute create.sql novamente. Confira as instruções sobre dados legados no modelo lógico.
+- Base existente: se a tabela `triagem` ainda não existir, siga as instruções do modelo lógico para aplicar `001_triagem.sql`. Com a tabela `triagem` disponível, aplique `sistema-pronto-socorro/migrations/002_encerramento_medicacao.sql` uma vez.
 - Recepção: busque um CPF, cadastre ou edite o paciente e abra o atendimento. O número aparece na tela; o atendimento passa a constar em /triagem.html.
-- Triagem: a fila atualiza automaticamente a cada 15 segundos e pelo botão Atualizar lista.
+- Triagem: a fila atualiza automaticamente a cada 15 segundos e pelo botão Atualizar lista. Escolha uma cor para encaminhar o atendimento à fila médica.
+- Recepção: consulte pelo CPF ou número do atendimento, edite o vínculo do paciente, o status, as observações e as orientações. Para cancelar, informe o motivo.
+- Médico: confirme pela fila para registrar a alta. Em uma base nova, registre `AT0003` como vermelho na triagem e verifique que ele aparece antes de `AT0001` e `AT0002`, que são amarelos.
 
 Na pasta sistema-pronto-socorro/pronto-socorro, execute npm test para os testes HTTP com banco em memória. Eles verificam cadastro, edição, mudança de CPF, busca, validações, abertura e presença na fila, além da entrega das páginas. Não substituem a validação SQL real.
 

@@ -72,6 +72,36 @@
             </div>
         </div>
 
+        <section class="painel">
+            <h2>Consultar atendimentos</h2>
+            <form id="consultaAtendimentos" class="busca">
+                <label for="buscaAtendimento">Número do atendimento ou CPF</label>
+                <div class="busca-linha">
+                    <div class="campo"><input id="buscaAtendimento" required></div>
+                    <button class="botao">Consultar</button>
+                </div>
+            </form>
+            <p id="mensagemConsultaAtendimentos" role="status"></p>
+            <ul id="resultadosAtendimentos"></ul>
+            <form id="editorAtendimento" class="busca" hidden>
+                <fieldset>
+                    <legend>Editar atendimento</legend>
+                    <label>CPF do paciente <input name="cpfPaciente" maxlength="14" required></label>
+                    <label>Status
+                        <select name="status">
+                            <option value="ABERTO">Aberto</option>
+                            <option value="CONFIRMADO">Confirmado com alta</option>
+                            <option value="CANCELADO">Cancelado</option>
+                        </select>
+                    </label>
+                    <label>Observações <textarea name="observacoes" rows="3"></textarea></label>
+                    <label>Orientações <textarea name="orientacoes" rows="3"></textarea></label>
+                    <label hidden>Motivo do cancelamento <textarea name="motivoCancelamento" rows="2"></textarea></label>
+                    <button class="botao">Salvar atendimento</button>
+                </fieldset>
+            </form>
+        </section>
+
     </main>
 
     <footer class="rodape">

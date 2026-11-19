@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronto Socorro - Médico</title>
+    <link rel="stylesheet" href="css/geral.css">
+    <link rel="stylesheet" href="css/recepcao.css">
+</head>
+<body>
+    <header class="barra">
+        <div class="barra-dentro">
+            <a class="logo" href="index.html"><span class="logo-nome">Pronto Socorro</span></a>
+            <nav class="menu" aria-label="Menu principal">
+                <a href="index.html">Início</a>
+                <a href="recepcao.html">Recepção</a>
+                <a href="triagem.html">Triagem</a>
+                <a class="ativo" href="medico.html" aria-current="page">Médico</a>
+            </nav>
+        </div>
+    </header>
+    <main class="conteudo">
+        <div class="cabecalho-pagina"><h1>Fila médica</h1></div>
+        <section class="painel" aria-label="Atendimentos por prioridade">
+            <button class="botao botao-secundario" id="atualizarFilaMedica">Atualizar lista</button>
+            <p id="mensagemFilaMedica" role="status"></p>
+            <ol id="filaMedica"></ol>
+        </section>
+    </main>
+    <script src="/script.js"></script>
+</body>
+</html>

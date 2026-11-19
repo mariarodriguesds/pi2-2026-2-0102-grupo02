@@ -247,3 +247,42 @@
         flex-direction: column-reverse;
     }
 }
+
+#consultaAtendimentos,
+#editorAtendimento {
+    margin-block: 1rem;
+}
+
+#editorAtendimento fieldset {
+    display: grid;
+    gap: .75rem;
+    padding: 1rem;
+}
+
+#editorAtendimento label[hidden] {
+    display: none;
+}
+
+#editorAtendimento label:not([hidden]) {
+    display: grid;
+    gap: .25rem;
+}
+
+#editorAtendimento input,
+#editorAtendimento select,
+#editorAtendimento textarea {
+    font: inherit;
+    padding: .4rem;
+    max-width: 100%;
+}
+
+#resultadosAtendimentos li,
+#filaMedica li,
+#filaTriagem > div {
+    margin-block: 1rem;
+}
+
+#resultadosAtendimentos,
+#filaMedica {
+    padding-inline-start: 1.5rem;
+}
