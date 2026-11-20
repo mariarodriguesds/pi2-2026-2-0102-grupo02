@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronto Socorro - Alterar atendimento</title>
+    <link rel="stylesheet" href="css/geral.css">
+    <link rel="stylesheet" href="css/recepcao.css">
+</head>
+<body>
+
+    <header class="barra">
+        <div class="barra-dentro">
+            <a class="logo" href="index.html">
+                <div class="logo-icone">
+                    <svg viewBox="0 0 24 24" fill="#fff"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>
+                </div>
+                <div>
+                    <p class="logo-nome">Pronto Socorro</p>
+                    <p class="logo-sub">Sistema de Atendimentos</p>
+                </div>
+            </a>
+
+            <nav class="menu">
+                <a href="index.html">Início</a>
+                <a class="ativo" href="recepcao.html">Recepção</a>
+                <a href="triagem.html">Triagem</a>
+                <a href="medico.html">Médico</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="conteudo">
+
+        <div class="cabecalho-pagina">
+            <div class="trilha"><a href="index.html">Início</a> / <a href="recepcao.html">Recepção</a> / <a href="consulta-atendimento.html">Consultar atendimento</a> / Alterar</div>
+            <h1>Alterar atendimento</h1>
+            <p>Só é possível alterar enquanto o médico não confirmou o atendimento.</p>
+        </div>
+
+        <div class="painel">
+            <div class="resumo-alteracao">
+                <p>Atendimento <strong id="numeroAlteracao"></strong></p>
+                <p>Paciente <strong id="nomeAlteracao"></strong></p>
+                <p>Situação <strong id="situacaoAlteracao" class="situacao"></strong></p>
+            </div>
+
+            <div id="recusaAlteracao" class="recusa" hidden>
+                <h2>Alteração não permitida</h2>
+                <p id="mensagemRecusa">Este atendimento já foi confirmado pelo médico e não pode mais ser alterado.</p>
+                <a class="botao botao-secundario" href="consulta-atendimento.html">Voltar para a consulta</a>
+            </div>
+
+            <form id="formAlterarAtendimento" class="cadastro">
+                <input type="hidden" id="ID_ATENDIMENTO">
+
+                <div class="cadastro-grade">
+                    <div class="grupo">
+                        <label for="cpfPaciente">CPF do paciente <strong class="obrigatorio">*</strong></label>
+                        <input type="text" id="cpfPaciente" placeholder="000.000.000-00" maxlength="14" required>
+                        <p class="dica">Troque se o atendimento foi aberto no paciente errado.</p>
+                    </div>
+
+                    <div class="grupo">
+                        <label for="dataHoraChegada">Data e hora da chegada <strong class="obrigatorio">*</strong></label>
+                        <input type="datetime-local" id="dataHoraChegada" required>
+                    </div>
+                </div>
+
+                <p id="mensagemAlteracao"></p>
+
+                <div class="cadastro-botoes">
+                    <a class="botao botao-secundario" href="consulta-atendimento.html">Cancelar</a>
+                    <button type="submit" class="botao">Salvar alterações</button>
+                </div>
+            </form>
+        </div>
+
+    </main>
+
+    <footer class="rodape">
+        <div class="rodape-dentro">
+            <p>Sistema de Atendimentos de Pronto Socorro</p>
+            <p>Projeto Integrador II · Grupo 02</p>
+        </div>
+    </footer>
+
+    <script src="/script.js"></script>
+</body>
+</html>
