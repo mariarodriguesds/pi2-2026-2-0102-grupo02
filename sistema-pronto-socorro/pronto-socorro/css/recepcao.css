@@ -328,10 +328,11 @@
     color: #7c3aed;
 }
 
-/* Botão de alterar na ficha */
+/* Botões da ficha */
 .ficha-acoes {
     display: flex;
     justify-content: flex-end;
+    gap: 12px;
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid #e2e8f0;
@@ -341,6 +342,93 @@
     height: 40px;
     padding: 0 18px;
     font-size: 14px;
+}
+
+.botao-perigo {
+    background: #ffffff;
+    color: #d62839;
+    border: 1.5px solid #f5c2c7;
+    box-shadow: none;
+}
+
+.botao-perigo:hover {
+    background: #fdecee;
+    box-shadow: none;
+}
+
+/* Cancelar atendimento */
+.ficha-cancelamento {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 12px;
+    background: #fdecee;
+    border: 1px solid #f5c2c7;
+}
+
+.ficha-campo {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.ficha-campo textarea {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 16px;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1.5px solid #f5c2c7;
+    border-radius: 12px;
+    resize: vertical;
+}
+
+.ficha-campo textarea:focus {
+    outline: none;
+    border-color: #d62839;
+    box-shadow: 0 0 0 4px rgba(214, 40, 57, 0.12);
+}
+
+.ficha-cancelamento-botoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+/* Quando o formulário abre, os botões da ficha somem */
+.ficha-atendimento:has(.ficha-cancelamento:not([hidden])) .ficha-acoes {
+    display: none;
+}
+
+.ficha-recusa {
+    margin: 16px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #fdecee;
+    border: 1px solid #f5c2c7;
+    color: #a4161a;
+    font-weight: 500;
+}
+
+.ficha-recusa:empty {
+    display: none;
+}
+
+.ficha-motivo {
+    margin: 16px 0 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.ficha-motivo strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #0f172a;
 }
 
 /* Alterar atendimento */

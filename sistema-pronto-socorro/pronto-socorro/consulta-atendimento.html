@@ -78,9 +78,26 @@
                 <p>CPF <strong class="ficha-cpf"></strong></p>
                 <p>Chegada <strong class="ficha-chegada"></strong></p>
             </div>
+            <p class="ficha-motivo" hidden>Motivo do cancelamento <strong class="ficha-motivo-texto"></strong></p>
+
             <div class="ficha-acoes">
+                <button type="button" class="botao botao-pequeno botao-perigo ficha-cancelar">Cancelar atendimento</button>
                 <a class="botao botao-pequeno botao-secundario ficha-alterar" href="alterar-atendimento.html">Alterar</a>
             </div>
+
+            <p class="ficha-recusa"></p>
+
+            <form class="ficha-cancelamento" hidden>
+                <label class="ficha-campo">
+                    Motivo do cancelamento <strong class="obrigatorio">*</strong>
+                    <textarea class="ficha-motivo-campo" rows="3" placeholder="Ex.: paciente desistiu e foi embora" required></textarea>
+                </label>
+
+                <div class="ficha-cancelamento-botoes">
+                    <button type="button" class="botao botao-pequeno botao-secundario ficha-voltar">Voltar</button>
+                    <button type="submit" class="botao botao-pequeno">Confirmar cancelamento</button>
+                </div>
+            </form>
         </article>
     </template>
 
