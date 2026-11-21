@@ -167,3 +167,35 @@ sistema-pronto-socorro/
 - Os dois servidores utilizam a porta 3000. Por isso, não devem ser executados simultaneamente na mesma porta.
 - O arquivo ```config.example.js``` deve permanecer no repositório para orientar a configuração em outros computadores.
 
+
+### 8. O que cada perfil faz
+
+O sistema tem três perfis, escolhidos na página inicial.
+
+#### 8.1. Recepção
+
+- Busca o paciente pelo CPF.
+- Cadastra o paciente quando ele não é encontrado, sem aceitar CPF repetido.
+- Edita os dados pessoais do paciente.
+- Abre o atendimento. O sistema gera o número (AT0001, AT0002...) e grava a data e hora de chegada.
+- Consulta o atendimento pelo número ou pelo CPF e vê a situação atual.
+- Altera o atendimento enquanto ele não foi confirmado nem cancelado.
+- Cancela o atendimento informando o motivo, antes da confirmação do médico.
+
+#### 8.2. Enfermagem (Triagem)
+
+- Vê a lista de atendimentos aguardando triagem, com número, nome e hora de chegada.
+- Registra pressão arterial, temperatura, batimentos e principais queixas.
+- Escolhe a classificação de Manchester (Vermelho, Laranja, Amarelo, Verde ou Azul). O atendimento passa para Aguardando médico.
+- Reclassifica enquanto o médico ainda não abriu o atendimento.
+
+#### 8.3. Médico
+
+- Vê o painel com os atendimentos aguardando médico, ordenados pela cor e, na mesma cor, pela ordem da triagem.
+- Abre o atendimento e vê os dados do paciente e da triagem. O atendimento passa para Em atendimento.
+- Registra medicações e orientações.
+- Confirma o atendimento e registra a alta. O atendimento passa para Confirmado / Alta e não pode mais ser alterado nem cancelado.
+
+### 9. Situações do atendimento
+
+O caminho do atendimento, de Aguardando triagem até Confirmado / Alta ou Cancelado, está desenhado em [docs/estados-atendimento.md](docs/estados-atendimento.md), junto com a rota do back-end que faz cada mudança.

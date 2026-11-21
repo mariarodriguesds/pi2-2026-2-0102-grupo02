@@ -133,6 +133,89 @@ async function listarAtendimentosAguardandoTriagem() {
 }
 
 
+// H10.1 - Lista os atendimentos aguardando médico
+// Ordem: primeiro pela cor (Vermelho, Laranja, Amarelo, Verde, Azul)
+// e, na mesma cor, por quem foi triado antes.
+async function listarAtendimentosAguardandoMedico() {
+    const sql = `
+        SELECT
+            a.numero_atendimento AS numero,
+            p.nome_completo AS nome,
+            DATE_FORMAT(p.data_nascimento, '%Y-%m-%d') AS dataNascimento,
+            t.classificacao_manchester AS classificacao,
+            t.data_hora_triagem AS dataHoraTriagem
+        FROM atendimento a
+        JOIN paciente p ON p.id_paciente = a.id_paciente
+        JOIN triagem t ON t.id_atendimento = a.id_atendimento
+        WHERE a.status = 'AGUARDANDO_MEDICO'
+        ORDER BY
+            CASE t.classificacao_manchester
+                WHEN 'VERMELHO' THEN 1
+                WHEN 'LARANJA' THEN 2
+                WHEN 'AMARELO' THEN 3
+                WHEN 'VERDE' THEN 4
+                WHEN 'AZUL' THEN 5
+            END,
+            t.data_hora_triagem ASC,
+            t.id_triagem ASC
+    `;
+
+    const [linhas] = await conexao.execute(sql);
+
+    return linhas;
+}
+
+// Busca um atendimento pelo número (AT0001), com o paciente e a triagem
+// Usado pelas operações do médico (H12.1, H13.2 e H14.2) e pela alteração (H11.1)
+async function buscarAtendimentoPorNumero(numero) {
+    const sql = `
+        SELECT
+            a.id_atendimento AS id,
+            a.numero_atendimento AS numero,
+            a.status AS status,
+            a.data_hora_chegada AS dataHoraChegada,
+            a.data_hora_confirmacao AS dataHoraAlta,
+            a.orientacoes AS orientacoes,
+            p.id_paciente AS idPaciente,
+            p.nome_completo AS nome,
+            p.cpf AS cpf,
+            DATE_FORMAT(p.data_nascimento, '%Y-%m-%d') AS dataNascimento,
+            t.pressao_arterial AS pressaoArterial,
+            t.temperatura AS temperatura,
+            t.batimentos_cardiacos AS batimentosCardiacos,
+            t.classificacao_manchester AS classificacao,
+            t.principais_queixas AS principaisQueixas,
+            t.data_hora_triagem AS dataHoraTriagem
+        FROM atendimento a
+        JOIN paciente p ON p.id_paciente = a.id_paciente
+        LEFT JOIN triagem t ON t.id_atendimento = a.id_atendimento
+        WHERE a.numero_atendimento = ?
+        LIMIT 1
+    `;
+
+    const [linhas] = await conexao.execute(sql, [numero.toUpperCase()]);
+
+    if (linhas.length === 0) {
+        return null;
+    }
+
+    var atendimento = linhas[0];
+
+    // Medicações já registradas nesse atendimento
+    const [medicacoes] = await conexao.execute(
+        `SELECT nome, posologia
+         FROM medicacao
+         WHERE id_atendimento = ?
+         ORDER BY id_medicacao`,
+        [atendimento.id]
+    );
+
+    atendimento.medicacoes = medicacoes;
+
+    return atendimento;
+}
+
+
 // Lê o corpo (JSON) enviado pelo front
 function lerCorpo(req) {
     return new Promise(function (resolve, reject) {
@@ -175,6 +258,7 @@ function enviarArquivo(res, caminho) {
         '/recepcao.html': 'recepcao.html',
         '/cadastro-paciente.html': 'cadastro-paciente.html',
         '/triagem.html': 'triagem.html',
+        '/consulta-atendimento.html': 'consulta-atendimento.html',
         '/paciente-nao-encontrado.html':
             'paciente-nao-encontrado.html',
 
@@ -855,6 +939,323 @@ http.createServer(async function (req, res) {
 
             responderJSON(res, 500, {
                 mensagem: "Erro ao alterar os dados pessoais."
+            });
+        }
+
+        return;
+    }
+
+
+    // H10.1 - Painel do médico: atendimentos aguardando médico
+    if (req.method === 'GET' && caminho === '/api/medico/fila') {
+        try {
+            var fila = await listarAtendimentosAguardandoMedico();
+
+            responderJSON(res, 200, {
+                mensagem: 'Atendimentos aguardando médico.',
+                atendimentos: fila
+            });
+
+        } catch (erro) {
+            console.error('Erro ao listar a fila do médico:', erro.message);
+
+            responderJSON(res, 500, {
+                mensagem: 'Erro ao listar os atendimentos aguardando médico.'
+            });
+        }
+
+        return;
+    }
+
+
+    // H12.1 - O médico abre o atendimento pelo painel
+    // Devolve paciente + triagem e passa de Aguardando médico para Em atendimento.
+    // Exemplo: POST /api/medico/atender/AT0001
+    if (req.method === 'POST' && /^\/api\/medico\/atender\/AT\d+$/i.test(caminho)) {
+
+        var numeroAtender = caminho.split('/')[4].toUpperCase();
+
+        try {
+            // Só muda se ainda estiver aguardando médico
+            await conexao.execute(
+                `UPDATE atendimento
+                 SET status = 'EM_ATENDIMENTO'
+                 WHERE numero_atendimento = ? AND status = 'AGUARDANDO_MEDICO'`,
+                [numeroAtender]
+            );
+
+            var atendimentoMedico = await buscarAtendimentoPorNumero(numeroAtender);
+
+            if (!atendimentoMedico) {
+                responderJSON(res, 404, {
+                    mensagem: 'Atendimento não encontrado.'
+                });
+                return;
+            }
+
+            // Se já estava Em atendimento, o médico só está reabrindo a tela
+            if (atendimentoMedico.status !== 'EM_ATENDIMENTO') {
+                responderJSON(res, 409, {
+                    mensagem: 'Este atendimento não está aguardando médico.'
+                });
+                return;
+            }
+
+            responderJSON(res, 200, {
+                mensagem: 'Atendimento em andamento.',
+                atendimento: atendimentoMedico
+            });
+
+        } catch (erro) {
+            console.error('Erro ao abrir o atendimento médico:', erro.message);
+
+            responderJSON(res, 500, {
+                mensagem: 'Erro ao abrir o atendimento médico.'
+            });
+        }
+
+        return;
+    }
+
+
+    // H13.2 - Grava medicações e orientações
+    // Só no atendimento que está Em atendimento.
+    // Corpo: { "medicacoes": [ { "nome": "Dipirona", "posologia": "500 mg de 6 em 6 horas" } ],
+    //          "orientacoes": "Repouso e hidratação" }
+    if (req.method === 'POST' && /^\/api\/medico\/medicacoes\/AT\d+$/i.test(caminho)) {
+
+        var numeroMedicacao = caminho.split('/')[4].toUpperCase();
+        var dadosMedicacao;
+
+        try {
+            dadosMedicacao = await lerCorpo(req);
+        } catch (erro) {
+            responderJSON(res, 400, {
+                mensagem: 'Dados inválidos.'
+            });
+            return;
+        }
+
+        var medicacoes = dadosMedicacao.medicacoes || [];
+        var orientacoes = String(dadosMedicacao.orientacoes || '').trim();
+
+        if (!Array.isArray(medicacoes)) {
+            responderJSON(res, 400, {
+                mensagem: 'Envie as medicações em uma lista.'
+            });
+            return;
+        }
+
+        if (medicacoes.length === 0 && orientacoes === '') {
+            responderJSON(res, 400, {
+                mensagem: 'Informe ao menos uma medicação ou as orientações.'
+            });
+            return;
+        }
+
+        // Toda medicação precisa ter nome
+        for (var i = 0; i < medicacoes.length; i++) {
+            if (!medicacoes[i] || String(medicacoes[i].nome || '').trim() === '') {
+                responderJSON(res, 400, {
+                    mensagem: 'Informe o nome de cada medicação.'
+                });
+                return;
+            }
+        }
+
+        try {
+            var atendimentoMed = await buscarAtendimentoPorNumero(numeroMedicacao);
+
+            if (!atendimentoMed) {
+                responderJSON(res, 404, {
+                    mensagem: 'Atendimento não encontrado.'
+                });
+                return;
+            }
+
+            if (atendimentoMed.status !== 'EM_ATENDIMENTO') {
+                responderJSON(res, 409, {
+                    mensagem: 'Só é possível registrar medicações em um atendimento Em atendimento.'
+                });
+                return;
+            }
+
+            for (var j = 0; j < medicacoes.length; j++) {
+                await conexao.execute(
+                    `INSERT INTO medicacao (id_atendimento, nome, posologia)
+                     VALUES (?, ?, ?)`,
+                    [
+                        atendimentoMed.id,
+                        String(medicacoes[j].nome).trim(),
+                        String(medicacoes[j].posologia || '').trim() || null
+                    ]
+                );
+            }
+
+            if (orientacoes !== '') {
+                await conexao.execute(
+                    `UPDATE atendimento
+                     SET orientacoes = ?
+                     WHERE id_atendimento = ?`,
+                    [orientacoes, atendimentoMed.id]
+                );
+            }
+
+            responderJSON(res, 201, {
+                mensagem: 'Medicações e orientações registradas.',
+                atendimento: await buscarAtendimentoPorNumero(numeroMedicacao)
+            });
+
+        } catch (erro) {
+            console.error('Erro ao gravar medicações:', erro.message);
+
+            responderJSON(res, 500, {
+                mensagem: 'Erro ao gravar as medicações e orientações.'
+            });
+        }
+
+        return;
+    }
+
+
+    // H14.2 - Confirma o atendimento e registra a alta
+    // Em atendimento -> Confirmado / Alta, com a data e hora da alta.
+    // Exemplo: POST /api/medico/alta/AT0001
+    if (req.method === 'POST' && /^\/api\/medico\/alta\/AT\d+$/i.test(caminho)) {
+
+        var numeroAlta = caminho.split('/')[4].toUpperCase();
+
+        try {
+            const [resultadoAlta] = await conexao.execute(
+                `UPDATE atendimento
+                 SET status = 'CONFIRMADO',
+                     data_hora_confirmacao = NOW()
+                 WHERE numero_atendimento = ? AND status = 'EM_ATENDIMENTO'`,
+                [numeroAlta]
+            );
+
+            if (resultadoAlta.affectedRows === 0) {
+                var atendimentoAlta = await buscarAtendimentoPorNumero(numeroAlta);
+
+                if (!atendimentoAlta) {
+                    responderJSON(res, 404, {
+                        mensagem: 'Atendimento não encontrado.'
+                    });
+                    return;
+                }
+
+                responderJSON(res, 409, {
+                    mensagem: 'Só é possível dar alta em um atendimento Em atendimento.'
+                });
+                return;
+            }
+
+            responderJSON(res, 200, {
+                mensagem: 'Atendimento confirmado e alta registrada.',
+                atendimento: await buscarAtendimentoPorNumero(numeroAlta)
+            });
+
+        } catch (erro) {
+            console.error('Erro ao registrar a alta:', erro.message);
+
+            responderJSON(res, 500, {
+                mensagem: 'Erro ao registrar a alta.'
+            });
+        }
+
+        return;
+    }
+
+
+    // H11.1 - Altera o atendimento (paciente e data/hora de chegada)
+    // Recusa quando ele já está Confirmado / Alta ou Cancelado.
+    // Corpo: { "cpf": "12345678901", "dataHoraChegada": "2026-11-20T14:30" }
+    if (req.method === 'PUT' && /^\/api\/atendimentos\/AT\d+$/i.test(caminho)) {
+
+        var numeroAlterar = caminho.split('/')[3].toUpperCase();
+        var dadosAlterar;
+
+        try {
+            dadosAlterar = await lerCorpo(req);
+        } catch (erro) {
+            responderJSON(res, 400, {
+                mensagem: 'Dados inválidos.'
+            });
+            return;
+        }
+
+        var cpfAlterar = String(dadosAlterar.cpf || '').replace(/\D/g, '');
+
+        // O datetime-local manda "2026-11-20T14:30"; o MySQL quer "2026-11-20 14:30"
+        var chegada = String(dadosAlterar.dataHoraChegada || '').replace('T', ' ');
+
+        if (cpfAlterar.length !== 11) {
+            responderJSON(res, 400, {
+                mensagem: 'CPF inválido.'
+            });
+            return;
+        }
+
+        if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(chegada)) {
+            responderJSON(res, 400, {
+                mensagem: 'Informe a data e hora de chegada.'
+            });
+            return;
+        }
+
+        try {
+            var atendimentoAlterar = await buscarAtendimentoPorNumero(numeroAlterar);
+
+            if (!atendimentoAlterar) {
+                responderJSON(res, 404, {
+                    mensagem: 'Atendimento não encontrado.'
+                });
+                return;
+            }
+
+            if (atendimentoAlterar.status === 'CONFIRMADO' ||
+                atendimentoAlterar.status === 'CANCELADO') {
+                responderJSON(res, 409, {
+                    mensagem: 'Este atendimento já foi encerrado e não pode mais ser alterado.'
+                });
+                return;
+            }
+
+            var pacienteNovo = await buscarPacientePorCPF(cpfAlterar);
+
+            if (!pacienteNovo) {
+                responderJSON(res, 404, {
+                    mensagem: 'Paciente não encontrado.'
+                });
+                return;
+            }
+
+            // O status entra no WHERE para não alterar se ele foi encerrado agora há pouco
+            const [resultadoAlterar] = await conexao.execute(
+                `UPDATE atendimento
+                 SET id_paciente = ?, data_hora_chegada = ?
+                 WHERE id_atendimento = ?
+                   AND status NOT IN ('CONFIRMADO', 'CANCELADO')`,
+                [pacienteNovo.id, chegada, atendimentoAlterar.id]
+            );
+
+            if (resultadoAlterar.affectedRows === 0) {
+                responderJSON(res, 409, {
+                    mensagem: 'Este atendimento já foi encerrado e não pode mais ser alterado.'
+                });
+                return;
+            }
+
+            responderJSON(res, 200, {
+                mensagem: 'Atendimento alterado.',
+                atendimento: await buscarAtendimentoPorNumero(numeroAlterar)
+            });
+
+        } catch (erro) {
+            console.error('Erro ao alterar atendimento:', erro.message);
+
+            responderJSON(res, 500, {
+                mensagem: 'Erro ao alterar o atendimento.'
             });
         }
 

@@ -571,3 +571,87 @@ if (formularioTriagem) {
     });
 
 }
+
+
+// H06.3 - CONSULTA DE ATENDIMENTO (pelo número ou pelo CPF)
+const formConsultaAtendimento = document.getElementById("formConsultaAtendimento");
+
+// Nome que aparece na tela para cada situação gravada no banco
+const nomesSituacao = {
+    ABERTO: "Aberto",
+    AGUARDANDO_TRIAGEM: "Aguardando triagem",
+    AGUARDANDO_MEDICO: "Aguardando médico",
+    EM_ATENDIMENTO: "Em atendimento",
+    CONFIRMADO: "Confirmado / Alta",
+    CANCELADO: "Cancelado"
+};
+
+if (formConsultaAtendimento) {
+
+    formConsultaAtendimento.addEventListener("submit", async function (evento) {
+
+        evento.preventDefault();
+
+        const mensagemConsulta = document.getElementById("mensagemConsulta");
+        const listaAtendimentos = document.getElementById("listaAtendimentos");
+        const modelo = document.getElementById("modeloAtendimento");
+
+        mensagemConsulta.textContent = "";
+        listaAtendimentos.innerHTML = "";
+
+        let busca = document.getElementById("busca").value.trim().toUpperCase();
+
+        // Se não for número de atendimento, tira os pontos e o traço do CPF
+        if (!/^AT\d+$/.test(busca)) {
+            busca = busca.replace(/\D/g, "");
+
+            if (busca.length !== 11) {
+                mensagemConsulta.textContent = "Digite o número do atendimento (ex: AT0001) ou um CPF com 11 dígitos.";
+                return;
+            }
+        }
+
+        try {
+
+            const resposta = await fetch(
+                "/api/atendimentos/" + encodeURIComponent(busca)
+            );
+
+            const dados = await resposta.json();
+
+            if (!resposta.ok) {
+                mensagemConsulta.textContent = dados.mensagem || "Erro ao consultar atendimento.";
+                return;
+            }
+
+            // Um card para cada atendimento encontrado
+            dados.atendimentos.forEach(function (atendimento) {
+
+                const ficha = modelo.content.cloneNode(true);
+
+                ficha.querySelector(".ficha-numero").textContent = atendimento.numero;
+                ficha.querySelector(".situacao").textContent =
+                    nomesSituacao[atendimento.status] || atendimento.status;
+                ficha.querySelector(".ficha-nome").textContent = atendimento.nome;
+                ficha.querySelector(".ficha-cpf").textContent = atendimento.cpf;
+                ficha.querySelector(".ficha-chegada").textContent =
+                    new Date(atendimento.dataHoraChegada).toLocaleString("pt-BR");
+
+                // Leva o número para a tela de alteração
+                ficha.querySelector(".ficha-alterar").href =
+                    "alterar-atendimento.html?numero=" + atendimento.numero;
+
+                listaAtendimentos.appendChild(ficha);
+            });
+
+        } catch (erro) {
+
+            console.error("Erro ao consultar atendimento:", erro);
+
+            mensagemConsulta.textContent = "Erro ao conectar com o servidor.";
+
+        }
+
+    });
+
+}
