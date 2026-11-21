@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronto Socorro - Atendimento médico</title>
+    <link rel="stylesheet" href="css/geral.css">
+    <link rel="stylesheet" href="css/medico.css">
+</head>
+<body>
+
+    <header class="barra">
+        <div class="barra-dentro">
+            <a class="logo" href="index.html">
+                <div class="logo-icone">
+                    <svg viewBox="0 0 24 24" fill="#fff"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>
+                </div>
+                <div>
+                    <p class="logo-nome">Pronto Socorro</p>
+                    <p class="logo-sub">Sistema de Atendimentos</p>
+                </div>
+            </a>
+
+            <nav class="menu">
+                <a href="index.html">Início</a>
+                <a href="recepcao.html">Recepção</a>
+                <a href="triagem.html">Triagem</a>
+                <a class="ativo" href="medico.html">Médico</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="conteudo">
+
+        <div class="cabecalho-pagina">
+            <div class="trilha"><a href="index.html">Início</a> / <a href="medico.html">Médico</a> / Atendimento</div>
+            <h1>Atendimento <strong id="numeroMedico" class="numero-titulo"></strong></h1>
+            <p>Dados do paciente e da triagem.</p>
+        </div>
+
+        <p id="mensagemAtendimentoMedico"></p>
+
+        <div class="painel">
+            <div class="topo-atendimento">
+                <h2>Paciente</h2>
+                <strong id="classificacaoMedico" class="selo"></strong>
+            </div>
+
+            <div class="dados">
+                <p>Nome <strong id="nomeMedico"></strong></p>
+                <p>CPF <strong id="cpfMedico"></strong></p>
+                <p>Nascimento <strong id="nascimentoMedico"></strong></p>
+                <p>Idade <strong id="idadeMedico"></strong></p>
+                <p>Telefone <strong id="telefoneMedico"></strong></p>
+                <p>Chegada <strong id="chegadaMedico"></strong></p>
+            </div>
+        </div>
+
+        <div class="painel secao">
+            <h2>Triagem</h2>
+
+            <div class="dados">
+                <p>Pressão arterial (<abbr title="milímetros de mercúrio">mmHg</abbr>) <strong id="pressaoMedico"></strong></p>
+                <p>Temperatura (<abbr title="graus Celsius">°C</abbr>) <strong id="temperaturaMedico"></strong></p>
+                <p>Batimentos cardíacos (<abbr title="batimentos por minuto">bpm</abbr>) <strong id="batimentosMedico"></strong></p>
+                <p>Triado em <strong id="dataTriagemMedico"></strong></p>
+            </div>
+
+            <h3>Principais queixas</h3>
+            <p id="queixasMedico" class="queixas"></p>
+
+            <p class="so-leitura">A classificação foi definida pela enfermagem e não pode ser alterada pelo médico.</p>
+        </div>
+
+        <div class="voltar">
+            <a class="botao botao-secundario" href="medico.html">Voltar ao painel</a>
+        </div>
+
+    </main>
+
+    <footer class="rodape">
+        <div class="rodape-dentro">
+            <p>Sistema de Atendimentos de Pronto Socorro</p>
+            <p>Projeto Integrador II · Grupo 02</p>
+        </div>
+    </footer>
+
+    <script src="/script.js"></script>
+</body>
+</html>
