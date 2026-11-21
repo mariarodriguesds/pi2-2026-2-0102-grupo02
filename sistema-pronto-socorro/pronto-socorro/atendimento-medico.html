@@ -51,7 +51,6 @@
                 <p>CPF <strong id="cpfMedico"></strong></p>
                 <p>Nascimento <strong id="nascimentoMedico"></strong></p>
                 <p>Idade <strong id="idadeMedico"></strong></p>
-                <p>Telefone <strong id="telefoneMedico"></strong></p>
                 <p>Chegada <strong id="chegadaMedico"></strong></p>
             </div>
         </div>
@@ -72,9 +71,58 @@
             <p class="so-leitura">A classificação foi definida pela enfermagem e não pode ser alterada pelo médico.</p>
         </div>
 
-        <div class="voltar">
-            <a class="botao botao-secundario" href="medico.html">Voltar ao painel</a>
-        </div>
+        <form id="formPrescricao" class="painel secao">
+            <h2>Medicações</h2>
+
+            <div class="tabela">
+                <table class="fila">
+                    <thead>
+                        <tr>
+                            <th>Medicação</th>
+                            <th>Posologia</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaMedicacoes"></tbody>
+                </table>
+            </div>
+
+            <p id="mensagemMedicacoes"></p>
+
+            <fieldset class="nova-medicacao">
+                <legend>Adicionar medicação</legend>
+
+                <div class="medicacao-grade">
+                    <div class="grupo">
+                        <label for="nomeMedicacao">Nome da medicação</label>
+                        <input type="text" id="nomeMedicacao" placeholder="Ex.: Dipirona" maxlength="150">
+                    </div>
+
+                    <div class="grupo grupo-largo">
+                        <label for="posologiaMedicacao">Posologia</label>
+                        <input type="text" id="posologiaMedicacao" placeholder="Ex.: 500 mg, oral, de 6 em 6 horas, por 3 dias" maxlength="255">
+                    </div>
+                </div>
+
+                <button type="button" id="botaoAdicionarMedicacao" class="botao botao-secundario botao-pequeno">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    Adicionar medicação
+                </button>
+            </fieldset>
+
+            <h2 class="titulo-orientacoes">Orientações</h2>
+            <div class="grupo">
+                <label for="orientacoes">Orientações para o paciente</label>
+                <textarea id="orientacoes" rows="4" placeholder="Ex.: repouso, beber bastante água, voltar se a febre continuar"></textarea>
+            </div>
+
+            <p id="mensagemPrescricao"></p>
+
+            <div class="prescricao-botoes">
+                <a class="botao botao-secundario" href="medico.html">Voltar ao painel</a>
+                <button type="submit" class="botao">Salvar medicações e orientações</button>
+            </div>
+        </form>
 
     </main>
 
@@ -84,6 +132,16 @@
             <p>Projeto Integrador II · Grupo 02</p>
         </div>
     </footer>
+
+    <template id="modeloMedicacao">
+        <tr>
+            <td class="fila-nome med-nome"></td>
+            <td class="med-posologia"></td>
+            <td class="fila-acao">
+                <button type="button" class="botao botao-pequeno botao-secundario remover-medicacao">Remover</button>
+            </td>
+        </tr>
+    </template>
 
     <script src="/script.js"></script>
 </body>

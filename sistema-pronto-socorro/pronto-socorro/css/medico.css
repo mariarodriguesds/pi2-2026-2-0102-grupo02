@@ -219,8 +219,95 @@
     color: #64748b;
 }
 
-.voltar {
-    margin-top: 24px;
+/* Medicações e orientações */
+#mensagemMedicacoes,
+#mensagemPrescricao {
+    margin: 16px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #f6f8fb;
+    border: 1px solid #e2e8f0;
+    font-weight: 500;
+    color: #64748b;
+}
+
+#mensagemMedicacoes:empty,
+#mensagemPrescricao:empty {
+    display: none;
+}
+
+.nova-medicacao {
+    margin: 20px 0 0;
+    padding: 20px;
+    border: 1.5px dashed #e2e8f0;
+    border-radius: 14px;
+}
+
+.nova-medicacao legend {
+    padding: 0 8px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.medicacao-grade {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.grupo-largo {
+    grid-column: 2 / 4;
+}
+
+.grupo label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.grupo input,
+.grupo select,
+.grupo textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 16px;
+    color: #0f172a;
+    background: #f6f8fb;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.grupo input,
+.grupo select {
+    height: 48px;
+    padding: 0 14px;
+}
+
+.grupo textarea {
+    padding: 12px 14px;
+    resize: vertical;
+}
+
+.grupo input:focus,
+.grupo select:focus,
+.grupo textarea:focus {
+    outline: none;
+    background: #ffffff;
+    border-color: #d62839;
+    box-shadow: 0 0 0 4px rgba(214, 40, 57, 0.12);
+}
+
+.painel h2.titulo-orientacoes {
+    margin: 28px 0 16px;
+}
+
+.prescricao-botoes {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 28px;
 }
 
 /* Celular */
@@ -235,7 +322,19 @@
         grid-template-columns: 1fr 1fr;
     }
 
-    .voltar .botao {
+    .medicacao-grade {
+        grid-template-columns: 1fr;
+    }
+
+    .grupo-largo {
+        grid-column: auto;
+    }
+
+    .nova-medicacao .botao {
         width: 100%;
+    }
+
+    .prescricao-botoes {
+        flex-direction: column-reverse;
     }
 }
