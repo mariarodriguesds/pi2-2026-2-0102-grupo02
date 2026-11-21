@@ -124,6 +124,24 @@
             </div>
         </form>
 
+        <div class="painel secao alta">
+            <h2>Confirmar atendimento e alta</h2>
+            <p class="alta-aviso">Depois de confirmar, o atendimento sai do painel e não pode mais ser alterado nem cancelado. Salve as medicações e orientações antes.</p>
+
+            <button type="button" id="botaoConfirmarAlta" class="botao botao-alta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>
+                Confirmar e registrar alta
+            </button>
+
+            <p id="mensagemAlta"></p>
+
+            <div id="altaRegistrada" class="alta-registrada" hidden>
+                <h3>Alta registrada</h3>
+                <p>Atendimento confirmado em <strong id="dataHoraAlta"></strong></p>
+                <a class="botao botao-secundario" href="medico.html">Voltar ao painel</a>
+            </div>
+        </div>
+
     </main>
 
     <footer class="rodape">

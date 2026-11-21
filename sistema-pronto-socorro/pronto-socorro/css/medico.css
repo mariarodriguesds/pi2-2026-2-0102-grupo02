@@ -310,6 +310,64 @@
     margin-top: 28px;
 }
 
+/* Confirmar e registrar alta */
+.alta-aviso {
+    margin: 12px 0 20px;
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.botao-alta {
+    background: #16a34a;
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+}
+
+.botao-alta:hover {
+    background: #15803d;
+    box-shadow: 0 6px 18px rgba(22, 163, 74, 0.4);
+}
+
+#mensagemAlta {
+    margin: 16px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #fdecee;
+    border: 1px solid #f5c2c7;
+    color: #a4161a;
+    font-weight: 500;
+}
+
+#mensagemAlta:empty {
+    display: none;
+}
+
+.alta-registrada {
+    padding: 24px;
+    text-align: center;
+    border-radius: 12px;
+    background: #e8f7ee;
+    border: 1px solid #bbe5cb;
+    color: #14532d;
+}
+
+.painel .alta-registrada h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #14532d;
+}
+
+.alta-registrada p {
+    margin: 0 0 20px;
+}
+
+/* Quando a alta é registrada, o botão some */
+.alta:has(.alta-registrada:not([hidden])) .botao-alta,
+.alta:has(.alta-registrada:not([hidden])) .alta-aviso {
+    display: none;
+}
+
 /* Celular */
 @media (max-width: 640px) {
     .fila th,
