@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronto Socorro - Atendimento médico</title>
+    <link rel="stylesheet" href="css/geral.css">
+    <link rel="stylesheet" href="css/medico.css">
+</head>
+<body>
+
+    <header class="barra">
+        <div class="barra-dentro">
+            <a class="logo" href="index.html">
+                <div class="logo-icone">
+                    <svg viewBox="0 0 24 24" fill="#fff"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>
+                </div>
+                <div>
+                    <p class="logo-nome">Pronto Socorro</p>
+                    <p class="logo-sub">Sistema de Atendimentos</p>
+                </div>
+            </a>
+
+            <nav class="menu">
+                <a href="index.html">Início</a>
+                <a href="recepcao.html">Recepção</a>
+                <a href="triagem.html">Triagem</a>
+                <a class="ativo" href="medico.html">Médico</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="conteudo">
+
+        <div class="cabecalho-pagina">
+            <div class="trilha"><a href="index.html">Início</a> / <a href="medico.html">Médico</a> / Atendimento</div>
+            <h1>Atendimento <strong id="numeroMedico" class="numero-titulo"></strong></h1>
+            <p>Dados do paciente e da triagem.</p>
+        </div>
+
+        <p id="mensagemAtendimentoMedico"></p>
+
+        <div class="painel">
+            <div class="topo-atendimento">
+                <h2>Paciente</h2>
+                <strong id="classificacaoMedico" class="selo"></strong>
+            </div>
+
+            <div class="dados">
+                <p>Nome <strong id="nomeMedico"></strong></p>
+                <p>CPF <strong id="cpfMedico"></strong></p>
+                <p>Nascimento <strong id="nascimentoMedico"></strong></p>
+                <p>Idade <strong id="idadeMedico"></strong></p>
+                <p>Chegada <strong id="chegadaMedico"></strong></p>
+            </div>
+        </div>
+
+        <div class="painel secao">
+            <h2>Triagem</h2>
+
+            <div class="dados">
+                <p>Pressão arterial (<abbr title="milímetros de mercúrio">mmHg</abbr>) <strong id="pressaoMedico"></strong></p>
+                <p>Temperatura (<abbr title="graus Celsius">°C</abbr>) <strong id="temperaturaMedico"></strong></p>
+                <p>Batimentos cardíacos (<abbr title="batimentos por minuto">bpm</abbr>) <strong id="batimentosMedico"></strong></p>
+                <p>Triado em <strong id="dataTriagemMedico"></strong></p>
+            </div>
+
+            <h3>Principais queixas</h3>
+            <p id="queixasMedico" class="queixas"></p>
+
+            <p class="so-leitura">A classificação foi definida pela enfermagem e não pode ser alterada pelo médico.</p>
+        </div>
+
+        <form id="formPrescricao" class="painel secao">
+            <h2>Medicações</h2>
+
+            <div class="tabela">
+                <table class="fila">
+                    <thead>
+                        <tr>
+                            <th>Medicação</th>
+                            <th>Posologia</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaMedicacoes"></tbody>
+                </table>
+            </div>
+
+            <p id="mensagemMedicacoes"></p>
+
+            <fieldset class="nova-medicacao">
+                <legend>Adicionar medicação</legend>
+
+                <div class="medicacao-grade">
+                    <div class="grupo">
+                        <label for="nomeMedicacao">Nome da medicação</label>
+                        <input type="text" id="nomeMedicacao" placeholder="Ex.: Dipirona" maxlength="150">
+                    </div>
+
+                    <div class="grupo grupo-largo">
+                        <label for="posologiaMedicacao">Posologia</label>
+                        <input type="text" id="posologiaMedicacao" placeholder="Ex.: 500 mg, oral, de 6 em 6 horas, por 3 dias" maxlength="255">
+                    </div>
+                </div>
+
+                <button type="button" id="botaoAdicionarMedicacao" class="botao botao-secundario botao-pequeno">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    Adicionar medicação
+                </button>
+            </fieldset>
+
+            <h2 class="titulo-orientacoes">Orientações</h2>
+            <div class="grupo">
+                <label for="orientacoes">Orientações para o paciente</label>
+                <textarea id="orientacoes" rows="4" placeholder="Ex.: repouso, beber bastante água, voltar se a febre continuar"></textarea>
+            </div>
+
+            <p id="mensagemPrescricao"></p>
+
+            <div class="prescricao-botoes">
+                <a class="botao botao-secundario" href="medico.html">Voltar ao painel</a>
+                <button type="submit" class="botao">Salvar medicações e orientações</button>
+            </div>
+        </form>
+
+        <div class="painel secao alta">
+            <h2>Confirmar atendimento e alta</h2>
+            <p class="alta-aviso">Depois de confirmar, o atendimento sai do painel e não pode mais ser alterado nem cancelado. Salve as medicações e orientações antes.</p>
+
+            <button type="button" id="botaoConfirmarAlta" class="botao botao-alta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>
+                Confirmar e registrar alta
+            </button>
+
+            <p id="mensagemAlta"></p>
+
+            <div id="altaRegistrada" class="alta-registrada" hidden>
+                <h3>Alta registrada</h3>
+                <p>Atendimento confirmado em <strong id="dataHoraAlta"></strong></p>
+                <a class="botao botao-secundario" href="medico.html">Voltar ao painel</a>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="rodape">
+        <div class="rodape-dentro">
+            <p>Sistema de Atendimentos de Pronto Socorro</p>
+            <p>Projeto Integrador II · Grupo 02</p>
+        </div>
+    </footer>
+
+    <template id="modeloMedicacao">
+        <tr>
+            <td class="fila-nome med-nome"></td>
+            <td class="med-posologia"></td>
+            <td class="fila-acao">
+                <button type="button" class="botao botao-pequeno botao-secundario remover-medicacao">Remover</button>
+            </td>
+        </tr>
+    </template>
+
+    <script src="/script.js"></script>
+</body>
+</html>

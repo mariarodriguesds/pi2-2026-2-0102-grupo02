@@ -37,7 +37,7 @@ CREATE TABLE atendimento (
     numero_atendimento          VARCHAR(20)    NOT NULL,          -- Ex: AT0001
     id_paciente                 INT             NOT NULL,
     data_hora_chegada           DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status                      ENUM('ABERTO','CONFIRMADO','CANCELADO') NOT NULL DEFAULT 'ABERTO',
+    status                      ENUM('ABERTO','AGUARDANDO_TRIAGEM','CONFIRMADO','CANCELADO') NOT NULL DEFAULT 'ABERTO',
     
     -- Confirmação do Médico
     data_hora_confirmacao       DATETIME        NULL,
@@ -110,3 +110,5 @@ INSERT INTO medicacao (id_atendimento, nome)
 SELECT id_atendimento, 'Medicação fictícia de exemplo'
 FROM atendimento WHERE numero_atendimento = 'AT0004';
 COMMIT;
+CREATE INDEX idx_atendimento_classificacao ON atendimento (classificacao_manchester);
+CREATE INDEX idx_atendimento_paciente ON atendimento (id_paciente);
