@@ -1,0 +1,398 @@
+/* Ordem das cores */
+.ordem {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
+}
+
+.ordem li {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border-left-width: 4px;
+    border-left-style: solid;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Painel do médico */
+.tabela {
+    overflow-x: auto;
+}
+
+.fila {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.fila th {
+    padding: 0 16px 12px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.fila td {
+    padding: 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.fila tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.fila tbody tr:hover {
+    background: #f6f8fb;
+}
+
+.fila-numero {
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.fila-nome {
+    font-weight: 600;
+}
+
+.fila-nascimento {
+    color: #64748b;
+}
+
+/* Selo com a cor da classificação */
+.selo {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border-left-width: 4px;
+    border-left-style: solid;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* Cores de Manchester */
+.cor-vermelho {
+    background: #fdecee;
+    border-color: #d62839;
+}
+
+.cor-laranja {
+    background: #fff4e5;
+    border-color: #ea8a0c;
+}
+
+.cor-amarelo {
+    background: #fef9c3;
+    border-color: #ca8a04;
+}
+
+.cor-verde {
+    background: #e8f7ee;
+    border-color: #16a34a;
+}
+
+.cor-azul {
+    background: #e8f0fe;
+    border-color: #2563eb;
+}
+
+/* Aviso do painel */
+#mensagemPainel {
+    margin: 20px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #f6f8fb;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    font-weight: 500;
+    color: #64748b;
+}
+
+#mensagemPainel:empty {
+    display: none;
+}
+
+/* Botão de acessar */
+.fila-acao {
+    text-align: right;
+}
+
+.botao-pequeno {
+    height: 40px;
+    padding: 0 18px;
+    font-size: 14px;
+}
+
+/* Atendimento médico */
+.numero-titulo {
+    letter-spacing: 0.04em;
+}
+
+#mensagemAtendimentoMedico {
+    margin: 0 0 20px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #fdecee;
+    border: 1px solid #f5c2c7;
+    color: #a4161a;
+    font-weight: 500;
+}
+
+#mensagemAtendimentoMedico:empty {
+    display: none;
+}
+
+.topo-atendimento {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.painel h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.secao {
+    margin-top: 24px;
+}
+
+.secao h2 {
+    margin-bottom: 20px;
+}
+
+.topo-atendimento .selo {
+    font-size: 15px;
+    padding: 6px 16px;
+}
+
+.dados {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+.dados p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.dados strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 17px;
+    color: #0f172a;
+}
+
+.dados abbr {
+    text-decoration: none;
+    cursor: help;
+}
+
+.painel h3 {
+    margin: 24px 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.queixas {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #f6f8fb;
+    border: 1px solid #e2e8f0;
+    line-height: 1.6;
+}
+
+.so-leitura {
+    margin: 20px 0 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* Medicações e orientações */
+#mensagemMedicacoes,
+#mensagemPrescricao {
+    margin: 16px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #f6f8fb;
+    border: 1px solid #e2e8f0;
+    font-weight: 500;
+    color: #64748b;
+}
+
+#mensagemMedicacoes:empty,
+#mensagemPrescricao:empty {
+    display: none;
+}
+
+.nova-medicacao {
+    margin: 20px 0 0;
+    padding: 20px;
+    border: 1.5px dashed #e2e8f0;
+    border-radius: 14px;
+}
+
+.nova-medicacao legend {
+    padding: 0 8px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.medicacao-grade {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.grupo-largo {
+    grid-column: 2 / 4;
+}
+
+.grupo label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.grupo input,
+.grupo select,
+.grupo textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 16px;
+    color: #0f172a;
+    background: #f6f8fb;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.grupo input,
+.grupo select {
+    height: 48px;
+    padding: 0 14px;
+}
+
+.grupo textarea {
+    padding: 12px 14px;
+    resize: vertical;
+}
+
+.grupo input:focus,
+.grupo select:focus,
+.grupo textarea:focus {
+    outline: none;
+    background: #ffffff;
+    border-color: #d62839;
+    box-shadow: 0 0 0 4px rgba(214, 40, 57, 0.12);
+}
+
+.painel h2.titulo-orientacoes {
+    margin: 28px 0 16px;
+}
+
+.prescricao-botoes {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+/* Confirmar e registrar alta */
+.alta-aviso {
+    margin: 12px 0 20px;
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.botao-alta {
+    background: #16a34a;
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+}
+
+.botao-alta:hover {
+    background: #15803d;
+    box-shadow: 0 6px 18px rgba(22, 163, 74, 0.4);
+}
+
+#mensagemAlta {
+    margin: 16px 0 0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #fdecee;
+    border: 1px solid #f5c2c7;
+    color: #a4161a;
+    font-weight: 500;
+}
+
+#mensagemAlta:empty {
+    display: none;
+}
+
+.alta-registrada {
+    padding: 24px;
+    text-align: center;
+    border-radius: 12px;
+    background: #e8f7ee;
+    border: 1px solid #bbe5cb;
+    color: #14532d;
+}
+
+.painel .alta-registrada h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #14532d;
+}
+
+.alta-registrada p {
+    margin: 0 0 20px;
+}
+
+/* Quando a alta é registrada, o botão some */
+.alta:has(.alta-registrada:not([hidden])) .botao-alta,
+.alta:has(.alta-registrada:not([hidden])) .alta-aviso {
+    display: none;
+}
+
+/* Celular */
+@media (max-width: 640px) {
+    .fila th,
+    .fila td {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .dados {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .medicacao-grade {
+        grid-template-columns: 1fr;
+    }
+
+    .grupo-largo {
+        grid-column: auto;
+    }
+
+    .nova-medicacao .botao {
+        width: 100%;
+    }
+
+    .prescricao-botoes {
+        flex-direction: column-reverse;
+    }
+}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronto Socorro - Médico</title>
+    <link rel="stylesheet" href="css/geral.css">
+    <link rel="stylesheet" href="css/medico.css">
+</head>
+<body>
+
+    <header class="barra">
+        <div class="barra-dentro">
+            <a class="logo" href="index.html">
+                <div class="logo-icone">
+                    <svg viewBox="0 0 24 24" fill="#fff"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>
+                </div>
+                <div>
+                    <p class="logo-nome">Pronto Socorro</p>
+                    <p class="logo-sub">Sistema de Atendimentos</p>
+                </div>
+            </a>
+
+            <nav class="menu">
+                <a href="index.html">Início</a>
+                <a href="recepcao.html">Recepção</a>
+                <a href="triagem.html">Triagem</a>
+                <a class="ativo" href="medico.html">Médico</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="conteudo">
+
+        <div class="cabecalho-pagina">
+            <div class="trilha"><a href="index.html">Início</a> / Médico</div>
+            <h1>Painel do médico</h1>
+            <p>Atendimentos aguardando, do mais urgente para o menos urgente.</p>
+        </div>
+
+        <ul class="ordem">
+            <li class="cor-vermelho">Vermelho</li>
+            <li class="cor-laranja">Laranja</li>
+            <li class="cor-amarelo">Amarelo</li>
+            <li class="cor-verde">Verde</li>
+            <li class="cor-azul">Azul</li>
+        </ul>
+
+        <div class="painel">
+            <div class="tabela">
+                <table class="fila">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Paciente</th>
+                            <th>Nascimento</th>
+                            <th>Classificação</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaMedico"></tbody>
+                </table>
+            </div>
+
+            <p id="mensagemPainel"></p>
+        </div>
+
+    </main>
+
+    <footer class="rodape">
+        <div class="rodape-dentro">
+            <p>Sistema de Atendimentos de Pronto Socorro</p>
+            <p>Projeto Integrador II · Grupo 02</p>
+        </div>
+    </footer>
+
+    <template id="modeloMedico">
+        <tr>
+            <td class="fila-numero"></td>
+            <td class="fila-nome"></td>
+            <td class="fila-nascimento"></td>
+            <td><strong class="selo fila-cor"></strong></td>
+            <td class="fila-acao">
+                <a class="botao botao-pequeno fila-acessar" href="atendimento-medico.html">Acessar</a>
+            </td>
+        </tr>
+    </template>
+
+    <script src="/script.js"></script>
+</body>
+</html>

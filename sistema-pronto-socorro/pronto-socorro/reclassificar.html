@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronto Socorro - Reclassificar</title>
+    <link rel="stylesheet" href="css/geral.css">
+    <link rel="stylesheet" href="css/triagem.css">
+</head>
+<body>
+
+    <header class="barra">
+        <div class="barra-dentro">
+            <a class="logo" href="index.html">
+                <div class="logo-icone">
+                    <svg viewBox="0 0 24 24" fill="#fff"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>
+                </div>
+                <div>
+                    <p class="logo-nome">Pronto Socorro</p>
+                    <p class="logo-sub">Sistema de Atendimentos</p>
+                </div>
+            </a>
+
+            <nav class="menu">
+                <a href="index.html">Início</a>
+                <a href="recepcao.html">Recepção</a>
+                <a class="ativo" href="triagem.html">Triagem</a>
+                <a href="medico.html">Médico</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="conteudo">
+
+        <div class="cabecalho-pagina">
+            <div class="trilha"><a href="index.html">Início</a> / <a href="triagem.html">Triagem</a> / Reclassificar</div>
+            <h1>Reclassificar atendimento</h1>
+            <p>Troque a cor se o quadro do paciente mudou.</p>
+        </div>
+
+        <div class="painel">
+            <div class="resumo-atendimento">
+                <p>Atendimento <strong id="numeroReclassificacao"></strong></p>
+                <p>Paciente <strong id="nomeReclassificacao"></strong></p>
+                <p>Classificação atual <strong id="classificacaoAtual" class="selo"></strong></p>
+            </div>
+
+            <p class="regra">Só é possível reclassificar enquanto o médico ainda não acessou o atendimento.</p>
+
+            <form id="formReclassificacao">
+                <input type="hidden" id="ID_ATENDIMENTO">
+
+                <h2>Nova classificação</h2>
+                <fieldset class="manchester">
+                    <legend>Prioridade <strong class="obrigatorio">*</strong></legend>
+
+                    <label class="cor-opcao cor-vermelho">
+                        <input type="radio" name="CLASSIFICACAO_MANCHESTER" value="Vermelho" required>
+                        <strong>Vermelho</strong>
+                        Emergência
+                        <small>Imediato</small>
+                    </label>
+
+                    <label class="cor-opcao cor-laranja">
+                        <input type="radio" name="CLASSIFICACAO_MANCHESTER" value="Laranja">
+                        <strong>Laranja</strong>
+                        Muito urgente
+                        <small>Até 10 min</small>
+                    </label>
+
+                    <label class="cor-opcao cor-amarelo">
+                        <input type="radio" name="CLASSIFICACAO_MANCHESTER" value="Amarelo">
+                        <strong>Amarelo</strong>
+                        Urgente
+                        <small>Até 60 min</small>
+                    </label>
+
+                    <label class="cor-opcao cor-verde">
+                        <input type="radio" name="CLASSIFICACAO_MANCHESTER" value="Verde">
+                        <strong>Verde</strong>
+                        Pouco urgente
+                        <small>Até 120 min</small>
+                    </label>
+
+                    <label class="cor-opcao cor-azul">
+                        <input type="radio" name="CLASSIFICACAO_MANCHESTER" value="Azul">
+                        <strong>Azul</strong>
+                        Não urgente
+                        <small>Até 240 min</small>
+                    </label>
+                </fieldset>
+
+                <p id="mensagemReclassificacao"></p>
+
+                <div class="triagem-botoes">
+                    <a class="botao botao-secundario" href="triagem.html">Cancelar</a>
+                    <button type="submit" class="botao">Salvar nova classificação</button>
+                </div>
+            </form>
+        </div>
+
+    </main>
+
+    <footer class="rodape">
+        <div class="rodape-dentro">
+            <p>Sistema de Atendimentos de Pronto Socorro</p>
+            <p>Projeto Integrador II · Grupo 02</p>
+        </div>
+    </footer>
+
+    <script src="/script.js"></script>
+</body>
+</html>

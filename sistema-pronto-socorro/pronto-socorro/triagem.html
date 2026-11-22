@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronto Socorro - Triagem</title>
+    <link rel="stylesheet" href="css/geral.css">
+    <link rel="stylesheet" href="css/triagem.css">
+</head>
+<body>
+
+    <header class="barra">
+        <div class="barra-dentro">
+            <a class="logo" href="index.html">
+                <div class="logo-icone">
+                    <svg viewBox="0 0 24 24" fill="#fff"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>
+                </div>
+                <div>
+                    <p class="logo-nome">Pronto Socorro</p>
+                    <p class="logo-sub">Sistema de Atendimentos</p>
+                </div>
+            </a>
+
+            <nav class="menu">
+                <a href="index.html">Início</a>
+                <a href="recepcao.html">Recepção</a>
+                <a class="ativo" href="triagem.html">Triagem</a>
+                <a href="medico.html">Médico</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="conteudo">
+
+        <div class="cabecalho-pagina">
+            <div class="trilha"><a href="index.html">Início</a> / Triagem</div>
+            <h1>Fila de triagem</h1>
+            <p>Pacientes aguardando triagem, de quem chegou primeiro para quem chegou por último.</p>
+        </div>
+
+        <div class="painel">
+            <div class="tabela">
+                <table class="fila">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Paciente</th>
+                            <th>Chegada</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaTriagem"></tbody>
+                </table>
+            </div>
+
+            <p id="mensagemFila"></p>
+        </div>
+
+        <div class="painel secao-aguardando">
+            <h2>Aguardando médico</h2>
+            <p class="secao-dica">Já triados. A classificação pode ser trocada enquanto o médico ainda não acessou o atendimento.</p>
+
+            <div class="tabela">
+                <table class="fila">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Paciente</th>
+                            <th>Classificação</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaAguardando"></tbody>
+                </table>
+            </div>
+
+            <p id="mensagemAguardando"></p>
+        </div>
+
+    </main>
+
+    <footer class="rodape">
+        <div class="rodape-dentro">
+            <p>Sistema de Atendimentos de Pronto Socorro</p>
+            <p>Projeto Integrador II · Grupo 02</p>
+        </div>
+    </footer>
+
+    <template id="modeloFila">
+        <tr>
+            <td class="fila-numero"></td>
+            <td class="fila-nome"></td>
+            <td class="fila-chegada"></td>
+            <td class="fila-acao">
+                <a class="botao botao-pequeno fila-triar" href="triar-paciente.html">Triar</a>
+            </td>
+        </tr>
+    </template>
+
+    <template id="modeloAguardando">
+        <tr>
+            <td class="fila-numero"></td>
+            <td class="fila-nome"></td>
+            <td><strong class="selo fila-cor"></strong></td>
+            <td class="fila-acao">
+                <a class="botao botao-pequeno botao-secundario fila-reclassificar" href="reclassificar.html">Reclassificar</a>
+            </td>
+        </tr>
+    </template>
+
+    <script src="/script.js"></script>
+</body>
+</html>
