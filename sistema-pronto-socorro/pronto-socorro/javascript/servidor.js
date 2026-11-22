@@ -33,7 +33,12 @@ async function buscarPacientePorCPF(cpf) {
             id_paciente AS id,
             nome_completo AS nome,
             cpf AS cpf,
-            data_nascimento AS dataNascimento
+            data_nascimento AS dataNascimento,
+            rg AS rg,
+            telefone AS telefone,
+            nome_mae AS nomeMae,
+            nome_pai AS nomePai,
+            endereco AS endereco
         FROM paciente
         WHERE cpf = ?
         LIMIT 1
@@ -229,7 +234,7 @@ function enviarArquivo(res, caminho) {
         '/editar-paciente.html': 'editar-paciente.html',
         '/medico.html': 'medico.html',
         '/reclassificar.html': 'reclassificar.html',
-        '/tirar-paciente.html': 'tirar-paciente.html',
+        '/triar-paciente.html': 'triar-paciente.html',
         '/triagem.html': 'triagem.html',
         '/paciente-nao-encontrado.html': 'paciente-nao-encontrado.html',
         '/script.js': 'JavaScript/script.js',
@@ -254,7 +259,8 @@ function enviarArquivo(res, caminho) {
     var tipos = {
         '.html': 'text/html; charset=utf-8',
         '.css': 'text/css; charset=utf-8',
-        '.js': 'text/javascript; charset=utf-8'
+        '.js': 'text/javascript; charset=utf-8',
+        ".png": "image/png"
     };
 
     fs.readFile(arquivo, function (err, data) {
@@ -389,6 +395,25 @@ http.createServer(async function (req, res) {
                 return;
             }
 
+            // Não abre outro atendimento se o paciente já tem um em andamento
+            const [emAndamento] = await conexao.execute(
+                `SELECT numero_atendimento
+                 FROM atendimento
+                 WHERE id_paciente = ?
+                   AND status NOT IN ('CONFIRMADO', 'CANCELADO')
+                 LIMIT 1`,
+                [idPaciente]
+            );
+
+            if (emAndamento.length > 0) {
+                responderJSON(res, 409, {
+                    mensagem: 'Este paciente já tem o atendimento ' +
+                        emAndamento[0].numero_atendimento + ' em andamento.'
+                });
+
+                return;
+            }
+
             var numero = await abrirAtendimento(idPaciente);
 
             responderJSON(res, 201, {
@@ -435,7 +460,11 @@ http.createServer(async function (req, res) {
     }
 
     // Lista atendimentos aguardando médico
-    async function listarAtendimentosAguardandoMedico() {
+    async function listarAtendimentosAguardandoMedico(incluirEmAtendimento) {
+
+        const situacoes = incluirEmAtendimento
+        ? "'AGUARDANDO_MEDICO', 'EM_ATENDIMENTO'"
+        : "'AGUARDANDO_MEDICO'";
 
         const sql = `
             SELECT
@@ -449,7 +478,7 @@ http.createServer(async function (req, res) {
                 ON p.id_paciente = a.id_paciente
             JOIN triagem t
                 ON t.id_atendimento = a.id_atendimento
-            WHERE a.status = 'AGUARDANDO_MEDICO'
+            WHERE a.status IN (${situacoes})
             ORDER BY
                 CASE t.classificacao_manchester
                     WHEN 'VERMELHO' THEN 1
@@ -753,11 +782,14 @@ http.createServer(async function (req, res) {
             var statusAtual = atendimentos[0].status;
 
             // Só permite cancelar antes de o médico assumir
-            if (
-                statusAtual !== 'ABERTO' &&
-                statusAtual !== 'AGUARDANDO_TRIAGEM' &&
-                statusAtual !== 'AGUARDANDO_MEDICO'
-            ) {
+            var permitidos = ['ABERTO', 'AGUARDANDO_TRIAGEM', 'AGUARDANDO_MEDICO'];
+
+            // O médico também pode cancelar o que ele está atendendo
+            if (dados.origem === 'medico') {
+                permitidos.push('EM_ATENDIMENTO');
+            }
+
+            if (!permitidos.includes(statusAtual)) {
 
                 await conexaoCancelamento.rollback();
 
@@ -1061,7 +1093,7 @@ http.createServer(async function (req, res) {
     // H10.1 - Painel do médico: atendimentos aguardando médico
     if (req.method === 'GET' && caminho === '/api/medico/fila') {
         try {
-            var fila = await listarAtendimentosAguardandoMedico();
+            var fila = await listarAtendimentosAguardandoMedico(true);
 
             responderJSON(res, 200, {
                 mensagem: 'Atendimentos aguardando médico.',
