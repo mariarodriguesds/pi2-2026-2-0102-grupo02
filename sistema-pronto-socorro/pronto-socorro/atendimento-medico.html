@@ -140,6 +140,28 @@
                 <p>Atendimento confirmado em <strong id="dataHoraAlta"></strong></p>
                 <a class="botao botao-secundario" href="medico.html">Voltar ao painel</a>
             </div>
+
+        </div>
+
+        <div id="cancelamentoMedico" class="painel secao">
+            <h2>Cancelar atendimento</h2>
+            <p class="alta-aviso">Use se o atendimento não vai continuar. O motivo fica registrado.</p>
+
+            <button type="button" id="botaoAbrirCancelamento" class="botao botao-secundario">Cancelar atendimento</button>
+
+            <form id="formCancelamentoMedico" hidden>
+                <div class="grupo">
+                    <label for="motivoCancelamentoMedico">Motivo do cancelamento <strong class="obrigatorio">*</strong></label>
+                    <textarea id="motivoCancelamentoMedico" rows="3" maxlength="500"></textarea>
+                </div>
+
+                <div class="prescricao-botoes">
+                    <button type="button" id="botaoVoltarCancelamento" class="botao botao-secundario">Voltar</button>
+                    <button type="submit" class="botao">Confirmar cancelamento</button>
+                </div>
+            </form>
+
+            <p id="mensagemCancelamentoMedico"></p>
         </div>
 
     </main>
