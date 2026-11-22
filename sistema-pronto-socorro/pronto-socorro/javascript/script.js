@@ -1,12 +1,3 @@
-// ============================================================
-// SCRIPT ÚNICO DO FRONT-END (mescla dos 3 códigos)
-// Todas as chamadas usam as rotas do servidor_mesclado.js
-// Cada bloco só roda se os elementos existirem na página.
-// ============================================================
-
-
-// ---------- Funções de apoio ----------
-
 async function lerResposta(resposta) {
     try {
         return await resposta.json();
@@ -1081,6 +1072,49 @@ if (filaTriagem) {
 }
 
 
+// Mostra em cima do formulário qual é o atendimento e o paciente.
+// Se a página tiver #numeroTriagem / #nomeTriagem usa esses campos;
+// se não tiver, cria o bloco sozinho acima do formulário.
+function mostrarResumoTriagem(atendimento) {
+
+    const numeroEl = document.getElementById("numeroTriagem");
+    const nomeEl = document.getElementById("nomeTriagem");
+
+    if (numeroEl || nomeEl) {
+        if (numeroEl) { numeroEl.textContent = atendimento.numero; }
+        if (nomeEl) { nomeEl.textContent = atendimento.nome; }
+        return;
+    }
+
+    let resumo = document.getElementById("resumoTriagem");
+
+    if (!resumo) {
+        resumo = document.createElement("div");
+        resumo.id = "resumoTriagem";
+        resumo.className = "resumo-atendimento";
+
+        formularioTriagem.parentNode.insertBefore(resumo, formularioTriagem);
+    }
+
+    const linhas = [
+        ["Atendimento ", atendimento.numero],
+        ["Paciente ", atendimento.nome],
+        ["CPF ", atendimento.cpf]
+    ];
+
+    resumo.replaceChildren();
+
+    linhas.forEach(function (par) {
+        const p = document.createElement("p");
+        const forte = document.createElement("strong");
+
+        forte.textContent = par[1];
+        p.append(par[0], forte);
+        resumo.append(p);
+    });
+}
+
+
 // Carrega os dados do atendimento ao abrir a tela de triagem
 
 async function carregarDadosTriagem() {
@@ -1110,6 +1144,8 @@ async function carregarDadosTriagem() {
         }
 
         const atendimento = dados.atendimento;
+
+        mostrarResumoTriagem(atendimento);
 
         document.getElementById("ID_ATENDIMENTO").value =
             atendimento.id;
@@ -1157,9 +1193,9 @@ async function carregarPainelMedico() {
 
     try {
 
-        const resposta = await fetch(
-            "/api/atendimentos/aguardando-medico"
-        );
+        // Lista quem aguarda o médico E quem ele já começou a atender
+        // (continua na lista até dar alta ou cancelar)
+        const resposta = await fetch("/api/medico/fila");
 
         const dados = await lerResposta(resposta);
 
@@ -1198,6 +1234,12 @@ async function carregarPainelMedico() {
                 "atendimento-medico.html?numero=" +
                 encodeURIComponent(atendimento.numero);
 
+            const emAndamento = atendimento.status === "EM_ATENDIMENTO";
+
+            if (emAndamento) {
+                linha.querySelector(".fila-acessar").textContent = "Continuar";
+            }
+
             // Quando o médico clicar em Acessar
             linha.querySelector(".fila-acessar").addEventListener(
                 "click",
@@ -1206,6 +1248,14 @@ async function carregarPainelMedico() {
                     evento.preventDefault();
 
                     const numero = atendimento.numero;
+
+                    // Já está em atendimento: só reabre a tela do médico
+                    if (emAndamento) {
+                        window.location.href =
+                            "atendimento-medico.html?numero=" +
+                            encodeURIComponent(numero);
+                        return;
+                    }
 
                     try {
 
@@ -1309,7 +1359,10 @@ if (filaMedica) {
                         const numero = encodeURIComponent(atendimento.numero);
 
                         // Aguardando médico -> Em atendimento -> Confirmado / Alta
-                        await enviarJSON("/api/medico/atender/" + numero, "POST", {});
+                        if (atendimento.status !== "EM_ATENDIMENTO") {
+                            await enviarJSON("/api/medico/atender/" + numero, "POST", {});
+                        }
+
                         await enviarJSON("/api/medico/alta/" + numero, "POST", {});
 
                         await atualizarFilaMedica();
@@ -1503,6 +1556,12 @@ async function consultarAtendimentos() {
             }
 
 
+            const statusBloqueadoCancelamento = [
+                "CANCELADO",
+                "EM_ATENDIMENTO",
+                "CONFIRMADO"
+            ].includes(atendimento.status);
+
             // Se já estiver cancelado, exibe o motivo registrado
             if (atendimento.status === "CANCELADO") {
 
@@ -1523,13 +1582,17 @@ async function consultarAtendimentos() {
                     linkAlterar.hidden = true;
                 }
 
+                if (formularioCancelamento) {
+                    formularioCancelamento.hidden = true;
+                }
+
             } else {
 
                 if (motivo) {
                     motivo.hidden = true;
                 }
 
-                // Não permite cancelar depois que o médico assumiu
+                // Não permite cancelar depois que o médico assumiu ou finalizou
                 if (
                     temCancelamento &&
                     (atendimento.status === "EM_ATENDIMENTO" ||
@@ -1552,8 +1615,18 @@ async function consultarAtendimentos() {
 
             if (temCancelamento) {
 
-                // Abre o formulário de cancelamento
+                // Abre o formulário de cancelamento apenas se o status permitir
                 botaoCancelar.addEventListener("click", function () {
+
+                    if (statusBloqueadoCancelamento) {
+                        botaoCancelar.hidden = true;
+                        formularioCancelamento.hidden = true;
+                        if (!mensagemRecusa.textContent) {
+                            mensagemRecusa.textContent =
+                                "Não é possível registrar cancelamento para este atendimento.";
+                        }
+                        return;
+                    }
 
                     formularioCancelamento.hidden = false;
 
@@ -1930,6 +2003,770 @@ if (consultaAtendimentos && editorAtendimento) {
             if (botao) {
                 botao.disabled = false;
             }
+        }
+    });
+}
+
+
+// ============================================================
+// TELA DO MÉDICO (atendimento-medico.html)
+// Mostra paciente + triagem, grava medicações/orientações e dá alta
+// ============================================================
+
+const formPrescricao = document.getElementById("formPrescricao");
+
+if (formPrescricao) {
+
+    const numeroMedicoURL =
+        new URLSearchParams(window.location.search).get("numero") || "";
+
+    const mensagemTela = document.getElementById("mensagemAtendimentoMedico");
+    const mensagemMedicacoes = document.getElementById("mensagemMedicacoes");
+    const mensagemPrescricao = document.getElementById("mensagemPrescricao");
+    const mensagemAlta = document.getElementById("mensagemAlta");
+
+    const corpoMedicacoes = document.getElementById("listaMedicacoes");
+    const modeloMedicacao = document.getElementById("modeloMedicacao");
+
+    const campoNomeMedicacao = document.getElementById("nomeMedicacao");
+    const campoPosologia = document.getElementById("posologiaMedicacao");
+    const campoOrientacoes = document.getElementById("orientacoes");
+
+    const botaoAdicionar = document.getElementById("botaoAdicionarMedicacao");
+    const botaoAlta = document.getElementById("botaoConfirmarAlta");
+
+    let atendimentoMedico = null;
+    let novasMedicacoes = [];          // ainda não gravadas no banco
+    let orientacoesSalvas = "";
+
+    const escrever = function (id, valor) {
+        const elemento = document.getElementById(id);
+
+        if (elemento) {
+            elemento.textContent = valor;
+        }
+    };
+
+    const calcularIdade = function (dataIso) {
+
+        if (!dataIso) {
+            return "Não informada";
+        }
+
+        const partes = String(dataIso).slice(0, 10).split("-").map(Number);
+        const hoje = new Date();
+
+        let idade = hoje.getFullYear() - partes[0];
+
+        const mes = hoje.getMonth() + 1;
+
+        if (mes < partes[1] || (mes === partes[1] && hoje.getDate() < partes[2])) {
+            idade--;
+        }
+
+        return idade + " anos";
+    };
+
+    const bloquearTela = function () {
+        formPrescricao.querySelectorAll("input, textarea, button").forEach(
+            function (campo) {
+                campo.disabled = true;
+            }
+        );
+
+        botaoAlta.disabled = true;
+
+        // Atendimento já encerrado ou indisponível: some o cancelamento
+        const blocoCancelamento = document.getElementById("cancelamentoMedico");
+
+        if (blocoCancelamento) {
+            blocoCancelamento.hidden = true;
+        }
+    };
+
+    const mostrarAlta = function (dataHora) {
+        document.getElementById("altaRegistrada").hidden = false;
+
+        escrever(
+            "dataHoraAlta",
+            dataHora ? new Date(dataHora).toLocaleString("pt-BR") : "agora"
+        );
+    };
+
+    // Desenha a tabela: medicações já gravadas + as novas (ainda não salvas)
+    const desenharMedicacoes = function () {
+
+        corpoMedicacoes.replaceChildren();
+
+        const salvas = atendimentoMedico.medicacoes || [];
+
+        const adicionarLinha = function (medicacao, indiceNova) {
+
+            const linha = modeloMedicacao.content.cloneNode(true);
+
+            linha.querySelector(".med-nome").textContent =
+                indiceNova === null
+                    ? medicacao.nome
+                    : medicacao.nome + " (não salva)";
+
+            linha.querySelector(".med-posologia").textContent =
+                medicacao.posologia || "—";
+
+            const botaoRemover = linha.querySelector(".remover-medicacao");
+
+            if (indiceNova === null) {
+                // O servidor não tem rota para apagar medicação já gravada
+                botaoRemover.hidden = true;
+
+            } else {
+                botaoRemover.addEventListener("click", function () {
+                    novasMedicacoes.splice(indiceNova, 1);
+                    desenharMedicacoes();
+                });
+            }
+
+            corpoMedicacoes.appendChild(linha);
+        };
+
+        salvas.forEach(function (medicacao) {
+            adicionarLinha(medicacao, null);
+        });
+
+        novasMedicacoes.forEach(function (medicacao, indice) {
+            adicionarLinha(medicacao, indice);
+        });
+
+        mostrarMensagem(
+            mensagemMedicacoes,
+            salvas.length + novasMedicacoes.length === 0
+                ? "Nenhuma medicação registrada."
+                : ""
+        );
+    };
+
+    const preencherTela = function (atendimento) {
+
+        atendimentoMedico = atendimento;
+
+        escrever("numeroMedico", atendimento.numero);
+        escrever("classificacaoMedico", atendimento.classificacao || "Sem triagem");
+        escrever("nomeMedico", atendimento.nome);
+        escrever("cpfMedico", atendimento.cpf);
+
+        escrever(
+            "nascimentoMedico",
+            atendimento.dataNascimento
+                ? new Date(atendimento.dataNascimento + "T00:00:00")
+                    .toLocaleDateString("pt-BR")
+                : "Não informado"
+        );
+
+        escrever("idadeMedico", calcularIdade(atendimento.dataNascimento));
+
+        escrever(
+            "chegadaMedico",
+            atendimento.dataHoraChegada
+                ? new Date(atendimento.dataHoraChegada).toLocaleString("pt-BR")
+                : "Não informada"
+        );
+
+        escrever("pressaoMedico", atendimento.pressaoArterial || "Não informada");
+        escrever("temperaturaMedico", atendimento.temperatura || "Não informada");
+        escrever("batimentosMedico", atendimento.batimentosCardiacos || "Não informado");
+
+        escrever(
+            "dataTriagemMedico",
+            atendimento.dataHoraTriagem
+                ? new Date(atendimento.dataHoraTriagem).toLocaleString("pt-BR")
+                : "Não informada"
+        );
+
+        escrever("queixasMedico", atendimento.principaisQueixas || "Não informadas");
+
+        orientacoesSalvas = atendimento.orientacoes || "";
+        campoOrientacoes.value = orientacoesSalvas;
+
+        desenharMedicacoes();
+    };
+
+    const carregarAtendimentoMedico = async function () {
+
+        if (!numeroMedicoURL) {
+            mostrarMensagem(mensagemTela, "Atendimento não informado.");
+            bloquearTela();
+            return;
+        }
+
+        try {
+            const { atendimento } = await api(
+                "/api/triagem/" + encodeURIComponent(numeroMedicoURL)
+            );
+
+            preencherTela(atendimento);
+
+            if (atendimento.status === "CONFIRMADO") {
+
+                mostrarAlta(atendimento.dataHoraAlta);
+                bloquearTela();
+
+            } else if (atendimento.status !== "EM_ATENDIMENTO") {
+
+                mostrarMensagem(
+                    mensagemTela,
+                    "Este atendimento está como \"" +
+                    (nomesSituacao[atendimento.status] || atendimento.status) +
+                    "\". Só é possível registrar medicações e alta quando ele está \"Em atendimento\"."
+                );
+
+                bloquearTela();
+            }
+
+        } catch (erro) {
+            console.error("Erro ao carregar atendimento médico:", erro);
+
+            mostrarMensagem(mensagemTela, erro.message);
+            bloquearTela();
+        }
+    };
+
+    // Põe na lista o que está digitado nos campos (sem gravar ainda)
+    const incluirMedicacaoDigitada = function () {
+
+        const nome = campoNomeMedicacao.value.trim();
+        const posologia = campoPosologia.value.trim();
+
+        if (!nome) {
+            if (posologia) {
+                mostrarMensagem(mensagemMedicacoes, "Informe o nome da medicação.");
+                campoNomeMedicacao.focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        novasMedicacoes.push({ nome: nome, posologia: posologia });
+
+        campoNomeMedicacao.value = "";
+        campoPosologia.value = "";
+
+        desenharMedicacoes();
+
+        return true;
+    };
+
+    botaoAdicionar.addEventListener("click", function () {
+
+        if (!campoNomeMedicacao.value.trim()) {
+            mostrarMensagem(mensagemMedicacoes, "Informe o nome da medicação.");
+            campoNomeMedicacao.focus();
+            return;
+        }
+
+        incluirMedicacaoDigitada();
+        campoNomeMedicacao.focus();
+    });
+
+    // Enter nos campos adiciona a medicação (em vez de enviar o formulário)
+    [campoNomeMedicacao, campoPosologia].forEach(function (campo) {
+        campo.addEventListener("keydown", function (evento) {
+            if (evento.key === "Enter") {
+                evento.preventDefault();
+                botaoAdicionar.click();
+            }
+        });
+    });
+
+    // Salvar medicações e orientações
+    formPrescricao.addEventListener("submit", async function (evento) {
+
+        evento.preventDefault();
+
+        if (!atendimentoMedico) {
+            return;
+        }
+
+        mostrarMensagem(mensagemPrescricao, "");
+
+        if (!incluirMedicacaoDigitada()) {
+            return;
+        }
+
+        const orientacoes = campoOrientacoes.value.trim();
+
+        if (novasMedicacoes.length === 0 && orientacoes === orientacoesSalvas) {
+            mostrarMensagem(mensagemPrescricao, "Não há alterações para salvar.");
+            return;
+        }
+
+        if (novasMedicacoes.length === 0 && !orientacoes) {
+            mostrarMensagem(
+                mensagemPrescricao,
+                "Informe ao menos uma medicação ou as orientações."
+            );
+            return;
+        }
+
+        const botaoSalvarPrescricao =
+            formPrescricao.querySelector('button[type="submit"]');
+
+        botaoSalvarPrescricao.disabled = true;
+
+        mostrarMensagem(mensagemPrescricao, "Salvando...");
+
+        try {
+            const dados = await enviarJSON(
+                "/api/medico/medicacoes/" + encodeURIComponent(atendimentoMedico.numero),
+                "POST",
+                {
+                    medicacoes: novasMedicacoes,
+                    orientacoes: orientacoes
+                }
+            );
+
+            novasMedicacoes = [];
+
+            preencherTela(dados.atendimento);
+
+            mostrarMensagem(
+                mensagemPrescricao,
+                "Medicações e orientações salvas com sucesso!"
+            );
+
+        } catch (erro) {
+            console.error("Erro ao salvar medicações:", erro);
+
+            mostrarMensagem(mensagemPrescricao, erro.message);
+
+        } finally {
+            botaoSalvarPrescricao.disabled = false;
+        }
+    });
+
+    // Confirmar atendimento e registrar alta
+    botaoAlta.addEventListener("click", async function () {
+
+        if (!atendimentoMedico) {
+            return;
+        }
+
+        mostrarMensagem(mensagemAlta, "");
+
+        const temPendencia =
+            novasMedicacoes.length > 0 ||
+            campoNomeMedicacao.value.trim() !== "" ||
+            campoOrientacoes.value.trim() !== orientacoesSalvas;
+
+        if (temPendencia) {
+            mostrarMensagem(
+                mensagemAlta,
+                "Salve as medicações e orientações antes de confirmar a alta."
+            );
+            return;
+        }
+
+        if (!confirm(
+            "Confirmar o atendimento e registrar a alta? " +
+            "Depois disso não será possível alterar."
+        )) {
+            return;
+        }
+
+        botaoAlta.disabled = true;
+
+        try {
+            const dados = await enviarJSON(
+                "/api/medico/alta/" + encodeURIComponent(atendimentoMedico.numero),
+                "POST",
+                {}
+            );
+
+            mostrarAlta(dados.atendimento.dataHoraAlta);
+            bloquearTela();
+
+        } catch (erro) {
+            console.error("Erro ao registrar alta:", erro);
+
+            mostrarMensagem(mensagemAlta, erro.message);
+
+            botaoAlta.disabled = false;
+        }
+    });
+
+    carregarAtendimentoMedico();
+}
+
+
+// ============================================================
+// RECLASSIFICAR (reclassificar.html)
+// Só enquanto o atendimento está Aguardando médico
+// ============================================================
+
+const formReclassificacao = document.getElementById("formReclassificacao");
+
+if (formReclassificacao) {
+
+    const numeroReclassificarURL =
+        new URLSearchParams(window.location.search).get("numero") || "";
+
+    const mensagemReclassificacao =
+        document.getElementById("mensagemReclassificacao");
+
+    const botaoReclassificar =
+        formReclassificacao.querySelector('button[type="submit"]');
+
+    let atendimentoReclassificar = null;
+
+    const bloquearReclassificacao = function () {
+        formReclassificacao.querySelectorAll("input, button").forEach(
+            function (campo) {
+                campo.disabled = true;
+            }
+        );
+    };
+
+    const carregarReclassificacao = async function () {
+
+        if (!numeroReclassificarURL) {
+            mostrarMensagem(mensagemReclassificacao, "Atendimento não informado.");
+            bloquearReclassificacao();
+            return;
+        }
+
+        try {
+            const { atendimento } = await api(
+                "/api/triagem/" + encodeURIComponent(numeroReclassificarURL)
+            );
+
+            atendimentoReclassificar = atendimento;
+
+            document.getElementById("numeroReclassificacao").textContent =
+                atendimento.numero;
+
+            document.getElementById("nomeReclassificacao").textContent =
+                atendimento.nome;
+
+            document.getElementById("classificacaoAtual").textContent =
+                atendimento.classificacao || "Sem triagem";
+
+            const campoId = document.getElementById("ID_ATENDIMENTO");
+
+            if (campoId) {
+                campoId.value = atendimento.id;
+            }
+
+            definirClassificacaoManchester(atendimento.classificacao);
+
+            if (atendimento.status !== "AGUARDANDO_MEDICO") {
+
+                mostrarMensagem(
+                    mensagemReclassificacao,
+                    "Não é possível reclassificar: o atendimento está como \"" +
+                    (nomesSituacao[atendimento.status] || atendimento.status) +
+                    "\"."
+                );
+
+                bloquearReclassificacao();
+            }
+
+        } catch (erro) {
+            console.error("Erro ao carregar reclassificação:", erro);
+
+            mostrarMensagem(mensagemReclassificacao, erro.message);
+            bloquearReclassificacao();
+        }
+    };
+
+    formReclassificacao.addEventListener("submit", async function (evento) {
+
+        evento.preventDefault();
+
+        if (!atendimentoReclassificar) {
+            return;
+        }
+
+        const novaClassificacao = lerClassificacaoManchester();
+
+        if (!novaClassificacao) {
+            mostrarMensagem(mensagemReclassificacao, "Selecione a nova classificação.");
+            return;
+        }
+
+        if (novaClassificacao.toUpperCase() ===
+            String(atendimentoReclassificar.classificacao || "").toUpperCase()) {
+
+            mostrarMensagem(
+                mensagemReclassificacao,
+                "Escolha uma classificação diferente da atual."
+            );
+            return;
+        }
+
+        botaoReclassificar.disabled = true;
+
+        mostrarMensagem(mensagemReclassificacao, "Salvando...");
+
+        try {
+            // O servidor regrava a triagem inteira: reenvia os dados atuais
+            // para não apagar pressão, temperatura, batimentos e queixas.
+            await enviarJSON("/api/triagem", "POST", {
+                idAtendimento: atendimentoReclassificar.id,
+                pressaoArterial: atendimentoReclassificar.pressaoArterial,
+                temperatura: atendimentoReclassificar.temperatura,
+                batimentosCardiacos: atendimentoReclassificar.batimentosCardiacos,
+                classificacaoManchester: novaClassificacao,
+                principaisQueixas: atendimentoReclassificar.principaisQueixas
+            });
+
+            mostrarMensagem(
+                mensagemReclassificacao,
+                "Classificação alterada com sucesso!"
+            );
+
+            // Volta para a fila de triagem, já com a nova cor
+            setTimeout(function () {
+                window.location.href = "triagem.html";
+            }, 1000);
+
+        } catch (erro) {
+            console.error("Erro ao reclassificar:", erro);
+
+            mostrarMensagem(mensagemReclassificacao, erro.message);
+
+            botaoReclassificar.disabled = false;
+        }
+    });
+
+    carregarReclassificacao();
+}
+
+
+// ============================================================
+// ALTERAR ATENDIMENTO (alterar-atendimento.html)
+// Troca o paciente (CPF) e a data/hora de chegada
+// ============================================================
+
+const formAlterarAtendimento = document.getElementById("formAlterarAtendimento");
+
+if (formAlterarAtendimento) {
+
+    const numeroAlterarURL =
+        new URLSearchParams(window.location.search).get("numero") || "";
+
+    const mensagemAlteracao = document.getElementById("mensagemAlteracao");
+    const campoCPFAlteracao = document.getElementById("cpfPaciente");
+    const campoChegada = document.getElementById("dataHoraChegada");
+
+    const botaoAlterar =
+        formAlterarAtendimento.querySelector('button[type="submit"]');
+
+    const preencherAlteracao = function (atendimento) {
+
+        document.getElementById("numeroAlteracao").textContent =
+            atendimento.numero;
+
+        document.getElementById("nomeAlteracao").textContent =
+            atendimento.nome;
+
+        document.getElementById("situacaoAlteracao").textContent =
+            nomesSituacao[atendimento.status] || atendimento.status;
+
+        campoCPFAlteracao.value = atendimento.cpf;
+
+        // O campo datetime-local quer "AAAA-MM-DDTHH:MM"
+        campoChegada.value =
+            paraDataHoraLocal(atendimento.dataHoraChegada).slice(0, 16);
+    };
+
+    const carregarAlteracao = async function () {
+
+        if (!numeroAlterarURL) {
+            mostrarMensagem(mensagemAlteracao, "Atendimento não informado.");
+            formAlterarAtendimento.hidden = true;
+            return;
+        }
+
+        try {
+            const { atendimentos } = await api(
+                "/api/atendimentos/" + encodeURIComponent(numeroAlterarURL)
+            );
+
+            const atendimento = atendimentos[0];
+
+            preencherAlteracao(atendimento);
+
+            const ID = document.getElementById("ID_ATENDIMENTO");
+
+            if (ID) {
+                ID.value = atendimento.numero;
+            }
+
+            // Confirmado ou cancelado: não pode mais alterar
+            if (atendimento.status === "CONFIRMADO" ||
+                atendimento.status === "CANCELADO") {
+
+                document.getElementById("recusaAlteracao").hidden = false;
+
+                if (atendimento.status === "CANCELADO") {
+                    document.getElementById("mensagemRecusa").textContent =
+                        "Este atendimento foi cancelado e não pode mais ser alterado.";
+                }
+
+                formAlterarAtendimento.hidden = true;
+            }
+
+        } catch (erro) {
+            console.error("Erro ao carregar atendimento:", erro);
+
+            mostrarMensagem(mensagemAlteracao, erro.message);
+            formAlterarAtendimento.hidden = true;
+        }
+    };
+
+    formAlterarAtendimento.addEventListener("submit", async function (evento) {
+
+        evento.preventDefault();
+
+        const cpf = limparCPF(campoCPFAlteracao.value);
+
+        if (!/^\d{11}$/.test(cpf)) {
+            mostrarMensagem(mensagemAlteracao, "Informe um CPF com 11 dígitos.");
+            return;
+        }
+
+        if (!campoChegada.value) {
+            mostrarMensagem(mensagemAlteracao, "Informe a data e hora da chegada.");
+            return;
+        }
+
+        botaoAlterar.disabled = true;
+
+        mostrarMensagem(mensagemAlteracao, "Salvando alterações...");
+
+        try {
+            const dados = await enviarJSON(
+                "/api/atendimentos/" + encodeURIComponent(numeroAlterarURL),
+                "PUT",
+                {
+                    cpf: cpf,
+                    dataHoraChegada: campoChegada.value
+                }
+            );
+
+            preencherAlteracao(dados.atendimento);
+
+            mostrarMensagem(mensagemAlteracao, "Atendimento alterado com sucesso!");
+
+        } catch (erro) {
+            console.error("Erro ao alterar atendimento:", erro);
+
+            mostrarMensagem(mensagemAlteracao, erro.message);
+
+        } finally {
+            botaoAlterar.disabled = false;
+        }
+    });
+
+    carregarAlteracao();
+}
+
+
+// ============================================================
+// CANCELAR ATENDIMENTO PELO MÉDICO (atendimento-medico.html)
+// Pede o motivo e volta para o painel do médico
+// ============================================================
+
+const cancelamentoMedico = document.getElementById("cancelamentoMedico");
+
+if (cancelamentoMedico) {
+
+    const numeroCancelarMedico =
+        new URLSearchParams(window.location.search).get("numero") || "";
+
+    const botaoAbrirCancelamento =
+        document.getElementById("botaoAbrirCancelamento");
+
+    const formCancelamentoMedico =
+        document.getElementById("formCancelamentoMedico");
+
+    const campoMotivoMedico =
+        document.getElementById("motivoCancelamentoMedico");
+
+    const botaoVoltarCancelamento =
+        document.getElementById("botaoVoltarCancelamento");
+
+    const mensagemCancelamentoMedico =
+        document.getElementById("mensagemCancelamentoMedico");
+
+    botaoAbrirCancelamento.addEventListener("click", function () {
+
+        formCancelamentoMedico.hidden = false;
+
+        botaoAbrirCancelamento.hidden = true;
+
+        campoMotivoMedico.focus();
+    });
+
+    botaoVoltarCancelamento.addEventListener("click", function () {
+
+        formCancelamentoMedico.hidden = true;
+
+        botaoAbrirCancelamento.hidden = false;
+
+        campoMotivoMedico.value = "";
+
+        mostrarMensagem(mensagemCancelamentoMedico, "");
+    });
+
+    formCancelamentoMedico.addEventListener("submit", async function (evento) {
+
+        evento.preventDefault();
+
+        const motivo = campoMotivoMedico.value.trim();
+
+        if (!motivo) {
+            mostrarMensagem(
+                mensagemCancelamentoMedico,
+                "Informe o motivo do cancelamento."
+            );
+            campoMotivoMedico.focus();
+            return;
+        }
+
+        if (!confirm("Cancelar este atendimento? Essa ação não pode ser desfeita.")) {
+            return;
+        }
+
+        const botaoConfirmarCancelamento =
+            formCancelamentoMedico.querySelector('button[type="submit"]');
+
+        botaoConfirmarCancelamento.disabled = true;
+
+        mostrarMensagem(mensagemCancelamentoMedico, "Cancelando...");
+
+        try {
+            await enviarJSON(
+                "/api/atendimentos/" +
+                encodeURIComponent(numeroCancelarMedico) + "/cancelar",
+                "POST",
+                { motivo: motivo, origem: "medico" }
+            );
+
+            mostrarMensagem(
+                mensagemCancelamentoMedico,
+                "Atendimento cancelado com sucesso!"
+            );
+
+            setTimeout(function () {
+                window.location.href = "medico.html";
+            }, 1000);
+
+        } catch (erro) {
+            console.error("Erro ao cancelar atendimento:", erro);
+
+            mostrarMensagem(mensagemCancelamentoMedico, erro.message);
+
+            botaoConfirmarCancelamento.disabled = false;
         }
     });
 }
