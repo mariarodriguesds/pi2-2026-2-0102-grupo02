@@ -57,5 +57,9 @@
         </div>
     </footer>
 
+<script>
+const cpf = new URLSearchParams(location.search).get('cpf');
+if (cpf) document.querySelector('a[href="cadastro-paciente.html"]').href += '?cpf=' + encodeURIComponent(cpf);
+</script>
 </body>
 </html>
