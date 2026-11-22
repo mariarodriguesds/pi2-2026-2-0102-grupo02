@@ -85,6 +85,8 @@ async function buscarAtendimentos(numeroOuCpf) {
             a.numero_atendimento AS numero,
             a.data_hora_chegada AS dataHoraChegada,
             a.status AS status,
+            a.motivo_cancelamento AS motivoCancelamento,
+            a.data_hora_cancelamento AS dataHoraCancelamento,
             p.id_paciente AS idPaciente,
             p.nome_completo AS nome,
             p.cpf AS cpf
@@ -132,6 +134,53 @@ async function listarAtendimentosAguardandoTriagem() {
     return linhas;
 }
 
+async function buscarAtendimentoPorNumero(numero) {
+    const sql = `
+        SELECT
+            a.id_atendimento AS id,
+            a.numero_atendimento AS numero,
+            a.status AS status,
+            a.data_hora_chegada AS dataHoraChegada,
+            a.data_hora_confirmacao AS dataHoraAlta,
+            a.orientacoes AS orientacoes,
+            p.id_paciente AS idPaciente,
+            p.nome_completo AS nome,
+            p.cpf AS cpf,
+            DATE_FORMAT(p.data_nascimento, '%Y-%m-%d') AS dataNascimento,
+            t.pressao_arterial AS pressaoArterial,
+            t.temperatura AS temperatura,
+            t.batimentos_cardiacos AS batimentosCardiacos,
+            t.classificacao_manchester AS classificacao,
+            t.principais_queixas AS principaisQueixas,
+            t.data_hora_triagem AS dataHoraTriagem
+        FROM atendimento a
+        JOIN paciente p ON p.id_paciente = a.id_paciente
+        LEFT JOIN triagem t ON t.id_atendimento = a.id_atendimento
+        WHERE a.numero_atendimento = ?
+        LIMIT 1
+    `;
+
+    const [linhas] = await conexao.execute(sql, [numero.toUpperCase()]);
+
+    if (linhas.length === 0) {
+        return null;
+    }
+
+    var atendimento = linhas[0];
+
+    // Medicações já registradas nesse atendimento
+    const [medicacoes] = await conexao.execute(
+        `SELECT nome, posologia
+         FROM medicacao
+         WHERE id_atendimento = ?
+         ORDER BY id_medicacao`,
+        [atendimento.id]
+    );
+
+    atendimento.medicacoes = medicacoes;
+
+    return atendimento;
+}
 
 // Lê o corpo (JSON) enviado pelo front
 function lerCorpo(req) {
@@ -174,15 +223,23 @@ function enviarArquivo(res, caminho) {
         '/index.html': 'index.html',
         '/recepcao.html': 'recepcao.html',
         '/cadastro-paciente.html': 'cadastro-paciente.html',
+        '/alterar-atendimento.html': 'alterar-atendimento.html',
+        '/atendimento-medico.html': 'atendimento-medico.html',
+        '/consulta-atendimento.html': 'consulta-atendimento.html',
+        '/editar-paciente.html': 'editar-paciente.html',
+        '/medico.html': 'medico.html',
+        '/reclassificar.html': 'reclassificar.html',
+        '/tirar-paciente.html': 'tirar-paciente.html',
         '/triagem.html': 'triagem.html',
-        '/paciente-nao-encontrado.html':
-            'paciente-nao-encontrado.html',
+        '/paciente-nao-encontrado.html': 'paciente-nao-encontrado.html',
 
         '/script.js': 'JavaScript/script.js',
 
         '/css/geral.css': 'css/geral.css',
         '/css/inicio.css': 'css/inicio.css',
-        '/css/recepcao.css': 'css/recepcao.css'
+        '/css/recepcao.css': 'css/recepcao.css',
+        '/css/triagem.css': 'css/triagem.css',
+        '/css/medico.css': 'css/medico.css'
     };
 
     if (!paginas[caminho]) {
@@ -374,6 +431,70 @@ http.createServer(async function (req, res) {
             responderJSON(res, 500, {
                 mensagem: "Erro ao listar atendimentos aguardando triagem."
             });
+        }
+
+        return;
+    }
+
+    // Lista atendimentos aguardando médico
+    async function listarAtendimentosAguardandoMedico() {
+
+        const sql = `
+            SELECT
+                a.numero_atendimento AS numero,
+                a.status AS status,
+                p.nome_completo AS nome,
+                DATE_FORMAT(p.data_nascimento, '%Y-%m-%d') AS dataNascimento,
+                t.classificacao_manchester AS classificacao
+            FROM atendimento a
+            JOIN paciente p
+                ON p.id_paciente = a.id_paciente
+            JOIN triagem t
+                ON t.id_atendimento = a.id_atendimento
+            WHERE a.status = 'AGUARDANDO_MEDICO'
+            ORDER BY
+                CASE t.classificacao_manchester
+                    WHEN 'VERMELHO' THEN 1
+                    WHEN 'LARANJA' THEN 2
+                    WHEN 'AMARELO' THEN 3
+                    WHEN 'VERDE' THEN 4
+                    WHEN 'AZUL' THEN 5
+                END,
+                a.numero_atendimento ASC
+        `;
+
+        const [linhas] = await conexao.execute(sql);
+
+        return linhas;
+    }
+
+    // Lista atendimentos aguardando médico
+    if (
+        req.method === 'GET' &&
+        caminho === '/api/atendimentos/aguardando-medico'
+    ) {
+
+        try {
+
+            const atendimentos =
+                await listarAtendimentosAguardandoMedico();
+
+            responderJSON(res, 200, {
+                mensagem: 'Atendimentos aguardando médico.',
+                atendimentos: atendimentos
+            });
+
+        } catch (erro) {
+
+            console.error(
+                'Erro ao listar atendimentos aguardando médico:',
+                erro.message
+            );
+
+            responderJSON(res, 500, {
+                mensagem: 'Erro ao listar atendimentos aguardando médico.'
+            });
+
         }
 
         return;
@@ -575,6 +696,196 @@ http.createServer(async function (req, res) {
     }
 
 
+    // HXX - Cancela um atendimento com motivo
+    // Só permite cancelar antes de o médico assumir.
+    if (
+        req.method === 'POST' &&
+        /^\/api\/atendimentos\/AT\d+\/cancelar$/i.test(caminho)
+    ) {
+
+        var numeroCancelar = caminho.split('/')[3].toUpperCase();
+
+        var dados;
+
+        try {
+            dados = await lerCorpo(req);
+        } catch (erro) {
+            responderJSON(res, 400, {
+                mensagem: 'Dados inválidos.'
+            });
+            return;
+        }
+
+        var motivo = String(dados.motivo || '').trim();
+
+        if (!motivo) {
+            responderJSON(res, 400, {
+                mensagem: 'Informe o motivo do cancelamento.'
+            });
+            return;
+        }
+
+        var conexaoCancelamento;
+
+        try {
+
+            conexaoCancelamento = await conexao.getConnection();
+
+            await conexaoCancelamento.beginTransaction();
+
+            const [atendimentos] = await conexaoCancelamento.execute(
+                `SELECT id_atendimento, status
+                 FROM atendimento
+                 WHERE numero_atendimento = ?
+                 FOR UPDATE`,
+                [numeroCancelar]
+            );
+
+            if (atendimentos.length === 0) {
+
+                await conexaoCancelamento.rollback();
+
+                responderJSON(res, 404, {
+                    mensagem: 'Atendimento não encontrado.'
+                });
+
+                return;
+            }
+
+            var statusAtual = atendimentos[0].status;
+
+            // Só permite cancelar antes de o médico assumir
+            if (
+                statusAtual !== 'ABERTO' &&
+                statusAtual !== 'AGUARDANDO_TRIAGEM' &&
+                statusAtual !== 'AGUARDANDO_MEDICO'
+            ) {
+
+                await conexaoCancelamento.rollback();
+
+                responderJSON(res, 409, {
+                    mensagem: 'Não é possível cancelar este atendimento. O médico já assumiu ou o atendimento já foi finalizado.'
+                });
+
+                return;
+            }
+
+            await conexaoCancelamento.execute(
+                `UPDATE atendimento
+                 SET status = 'CANCELADO',
+                     motivo_cancelamento = ?,
+                     data_hora_cancelamento = NOW()
+                 WHERE id_atendimento = ?`,
+                [
+                    motivo,
+                    atendimentos[0].id_atendimento
+                ]
+            );
+
+            await conexaoCancelamento.commit();
+
+            responderJSON(res, 200, {
+                mensagem: 'Atendimento cancelado com sucesso.'
+            });
+
+        } catch (erro) {
+
+            if (conexaoCancelamento) {
+                try {
+                    await conexaoCancelamento.rollback();
+                } catch (erroRollback) {
+                    console.error(
+                        'Erro ao desfazer o cancelamento:',
+                        erroRollback
+                    );
+                }
+            }
+
+            console.error('Erro ao cancelar atendimento:', erro);
+
+            responderJSON(res, 500, {
+                mensagem: 'Erro ao cancelar o atendimento.'
+            });
+
+        } finally {
+
+            if (conexaoCancelamento) {
+                conexaoCancelamento.release();
+            }
+
+        }
+
+        return;
+    }
+
+    // H12.3 - Médico acessa o atendimento
+    // AGUARDANDO_MEDICO -> EM_ATENDIMENTO
+    if (
+        req.method === 'POST' &&
+        /^\/api\/medico\/atender\/AT\d+$/i.test(caminho)
+    ) {
+
+        var numeroAtender = caminho.split('/')[4].toUpperCase();
+
+        try {
+
+            const [resultado] = await conexao.execute(
+                `UPDATE atendimento
+                SET status = 'EM_ATENDIMENTO'
+                WHERE numero_atendimento = ?
+                AND status = 'AGUARDANDO_MEDICO'`,
+                [numeroAtender]
+            );
+
+            if (resultado.affectedRows === 0) {
+
+                const [atendimentoAtual] = await conexao.execute(
+                    `SELECT status
+                    FROM atendimento
+                    WHERE numero_atendimento = ?
+                    LIMIT 1`,
+                    [numeroAtender]
+                );
+
+                if (atendimentoAtual.length === 0) {
+                    responderJSON(res, 404, {
+                        mensagem: 'Atendimento não encontrado.'
+                    });
+                    return;
+                }
+
+                responderJSON(res, 409, {
+                    mensagem: 'Este atendimento não está aguardando atendimento médico.'
+                });
+
+                return;
+            }
+
+            var atendimentoMedico =
+                await buscarAtendimentoPorNumero(numeroAtender);
+
+            responderJSON(res, 200, {
+                mensagem: 'Atendimento iniciado pelo médico.',
+                atendimento: atendimentoMedico
+            });
+
+        } catch (erro) {
+
+            console.error(
+                'Erro ao iniciar atendimento médico:',
+                erro.message
+            );
+
+            responderJSON(res, 500, {
+                mensagem: 'Erro ao iniciar atendimento médico.'
+            });
+        }
+
+        return;
+    }
+
+
+
     // H07.2 - Grava a triagem e H09.2 - encaminha para o médico
     if (req.method === "POST" && caminho === "/api/triagem") {
 
@@ -650,32 +961,56 @@ http.createServer(async function (req, res) {
                 return;
             }
 
-            if (atendimento[0].status !== "AGUARDANDO_TRIAGEM") {
+            if (atendimento[0].status !== "AGUARDANDO_TRIAGEM" && atendimento[0].status !== "AGUARDANDO_MEDICO") {
 
                 await conexaoTriagem.rollback();
 
                 responderJSON(res, 409, {
-                    mensagem: "Este atendimento não está aguardando triagem."
+                    mensagem: "A classificação Manchester não pode ser alterada neste status."
                 });
 
                 return;
             }
 
-            await conexaoTriagem.execute(
-                `INSERT INTO triagem
-                    (id_atendimento, pressao_arterial, temperatura,
-                    batimentos_cardiacos, classificacao_manchester,
-                    principais_queixas)
-                VALUES (?, ?, ?, ?, ?, ?)`,
-                [
-                    idAtendimento,
-                    pressaoArterial,
-                    temperatura,
-                    batimentosCardiacos,
-                    classificacaoManchester,
-                    principaisQueixas
-                ]
-            );
+            if (atendimento[0].status === "AGUARDANDO_TRIAGEM") {
+
+                await conexaoTriagem.execute(
+                    `INSERT INTO triagem
+                        (id_atendimento, pressao_arterial, temperatura,
+                        batimentos_cardiacos, classificacao_manchester,
+                        principais_queixas)
+                    VALUES (?, ?, ?, ?, ?, ?)`,
+                    [
+                        idAtendimento,
+                        pressaoArterial,
+                        temperatura,
+                        batimentosCardiacos,
+                        classificacaoManchester,
+                        principaisQueixas
+                    ]
+                );
+
+            } else if (atendimento[0].status === "AGUARDANDO_MEDICO") {
+
+                await conexaoTriagem.execute(
+                    `UPDATE triagem
+                    SET pressao_arterial = ?,
+                        temperatura = ?,
+                        batimentos_cardiacos = ?,
+                        classificacao_manchester = ?,
+                        principais_queixas = ?,
+                        data_hora_triagem = CURRENT_TIMESTAMP
+                    WHERE id_atendimento = ?`,
+                    [
+                        pressaoArterial,
+                        temperatura,
+                        batimentosCardiacos,
+                        classificacaoManchester,
+                        principaisQueixas,
+                        idAtendimento
+                    ]
+                );
+            }
 
             await conexaoTriagem.execute(
                 `UPDATE atendimento
@@ -719,6 +1054,47 @@ http.createServer(async function (req, res) {
                 conexaoTriagem.release();
             }
 
+        }
+
+        return;
+    }
+
+
+    // Consulta os dados da triagem ao reabrir um atendimento
+    if (
+        req.method === 'GET' &&
+        /^\/api\/triagem\/AT\d+$/i.test(caminho)
+    ) {
+
+        var numeroTriagem = caminho.split('/')[3].toUpperCase();
+
+        try {
+
+            var atendimentoTriagem =
+                await buscarAtendimentoPorNumero(numeroTriagem);
+
+            if (!atendimentoTriagem) {
+                responderJSON(res, 404, {
+                    mensagem: 'Atendimento não encontrado.'
+                });
+                return;
+            }
+
+            responderJSON(res, 200, {
+                mensagem: 'Dados da triagem encontrados.',
+                atendimento: atendimentoTriagem
+            });
+
+        } catch (erro) {
+
+            console.error(
+                'Erro ao consultar triagem:',
+                erro.message
+            );
+
+            responderJSON(res, 500, {
+                mensagem: 'Erro ao consultar os dados da triagem.'
+            });
         }
 
         return;
