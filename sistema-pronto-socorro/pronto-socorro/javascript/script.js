@@ -769,10 +769,15 @@ if (formularioTriagem) {
 
         evento.preventDefault();
 
+        // Mensagens aparecem na caixa da tela, não em alert()
+        const mensagemTriagem = document.getElementById("mensagemTriagem");
+
+        mostrarMensagem(mensagemTriagem, "");
+
         const classificacao = lerClassificacaoManchester();
 
         if (!classificacao) {
-            alert("Selecione a classificação de Manchester.");
+            mostrarMensagem(mensagemTriagem, "Selecione a classificação de Manchester.");
             return;
         }
 
@@ -798,19 +803,24 @@ if (formularioTriagem) {
             const dados = await lerResposta(resposta);
 
             if (!resposta.ok) {
-                alert(dados.mensagem || "Erro ao registrar a triagem.");
+                mostrarMensagem(mensagemTriagem,
+                    dados.mensagem || "Erro ao registrar a triagem.");
                 return;
             }
 
-            alert(dados.mensagem);
+            mostrarMensagem(mensagemTriagem,
+                (dados.mensagem || "Triagem registrada.") + " Voltando para a fila...");
 
-            window.location.href = "triagem.html";
+            // Dá tempo de ler a mensagem antes de voltar
+            setTimeout(function () {
+                window.location.href = "triagem.html";
+            }, 1500);
 
         } catch (erro) {
 
             console.error("Erro ao registrar triagem:", erro);
 
-            alert("Erro ao conectar com o servidor.");
+            mostrarMensagem(mensagemTriagem, "Erro ao conectar com o servidor.");
 
         }
 
@@ -1233,6 +1243,12 @@ async function carregarPainelMedico() {
         }
 
         listaMedico.innerHTML = "";
+
+        // Lista vazia: avisa em vez de deixar a tabela em branco
+        mostrarMensagem(mensagemPainel,
+            dados.atendimentos.length === 0
+                ? "Nenhum paciente aguardando atendimento médico."
+                : "");
 
         dados.atendimentos.forEach(function (atendimento) {
 
