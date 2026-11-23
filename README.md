@@ -4,8 +4,6 @@ Sistema web para gerenciamento do atendimento em um pronto-socorro, permitindo o
 
 ## Integrantes
 
-- Angelina Durigan
-- Felipe Ribeiro Paulo
 - Maria Fernanda Marques Rodrigues
 - Ricardo Verissimo Borges
 - Samantha Dell Vecchio Esteves
@@ -133,14 +131,26 @@ http://localhost:3000
 
 ```text
 sistema-pronto-socorro/
+├── create.sql
 ├── pronto-socorro/
 │   ├── index.html
 │   ├── recepcao.html
+│   ├── cadastro-paciente.html
+│   ├── editar-paciente.html
 │   ├── paciente-nao-encontrado.html
+│   ├── consulta-atendimento.html
+│   ├── alterar-atendimento.html
+│   ├── triagem.html
+│   ├── triar-paciente.html
+│   ├── reclassificar.html
+│   ├── medico.html
+│   ├── atendimento-medico.html
 │   ├── css/
 │   │   ├── geral.css
 │   │   ├── inicio.css
-│   │   └── recepcao.css
+│   │   ├── recepcao.css
+│   │   ├── triagem.css
+│   │   └── medico.css
 │   ├── javascript/
 │   │   ├── servidor.js
 │   │   ├── script.js
@@ -149,12 +159,13 @@ sistema-pronto-socorro/
 │   ├── package.json
 │   ├── package-lock.json
 │   └── .gitignore
-├── teste-conexao/
-│   ├── .gitignore
-│   ├── servidor.js
-│   ├── servidor.example.js
-│   └── config.js (local, não versionado)
-└── create.sql
+└── teste-conexao/
+    ├── servidor.js
+    ├── config.example.js
+    ├── config.js (local, não versionado)
+    ├── package.json
+    ├── package-lock.json
+    └── .gitignore
 ```
 
 
@@ -173,7 +184,6 @@ sistema-pronto-socorro/
 Os [modelos conceitual, lógico e físico](docs/modelos-banco.md) incluem o diagrama entidade-relacionamento. As regras para bases anteriores à triagem estão em [docs/modelo-logico-triagem.md](docs/modelo-logico-triagem.md).
 
 - Base nova: execute create.sql com MySQL 8.0.16+ ou MariaDB 10.2.1+ para garantir o CHECK das cinco cores.
-- Base existente: se a tabela `triagem` ainda não existir, siga as instruções do modelo lógico para aplicar `001_triagem.sql`. Com a tabela `triagem` disponível, aplique `sistema-pronto-socorro/migrations/002_encerramento_medicacao.sql` uma vez.
 - Recepção: busque um CPF, cadastre ou edite o paciente e abra o atendimento. O número aparece na tela; o atendimento passa a constar em /triagem.html.
 - Triagem: a fila atualiza automaticamente a cada 15 segundos e pelo botão Atualizar lista. Escolha uma cor para encaminhar o atendimento à fila médica.
 - Recepção: consulte pelo CPF ou número do atendimento, edite o vínculo do paciente, o status, as observações e as orientações. Para cancelar, informe o motivo.
