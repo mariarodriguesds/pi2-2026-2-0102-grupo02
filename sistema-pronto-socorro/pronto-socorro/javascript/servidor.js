@@ -59,28 +59,41 @@ async function buscarPacientePorCPF(cpf) {
 // Se o número já existir, o UNIQUE do banco recusa e dá erro.
 async function abrirAtendimento(idPaciente) {
 
-    // Pega o maior id e soma 1 para montar o próximo número
-    const [ultimo] = await conexao.execute(
-        'SELECT MAX(id_atendimento) AS maior FROM atendimento'
-    );
+    // Se dois atendimentos forem abertos ao mesmo tempo, o UNIQUE do banco
+    // recusa o número repetido. Nesse caso, calcula o número de novo e tenta outra vez.
+    for (var tentativa = 1; tentativa <= 5; tentativa++) {
 
-    var proximo = 1;
+        // Pega o maior id e soma 1 para montar o próximo número
+        const [ultimo] = await conexao.execute(
+            'SELECT MAX(id_atendimento) AS maior FROM atendimento'
+        );
 
-    if (ultimo[0].maior) {
-        proximo = ultimo[0].maior + 1;
+        var proximo = 1;
+
+        if (ultimo[0].maior) {
+            proximo = ultimo[0].maior + 1;
+        }
+
+        // Completa com zeros: 1 vira AT0001
+        var numero = 'AT' + String(proximo).padStart(4, '0');
+
+        try {
+            await conexao.execute(
+                `INSERT INTO atendimento
+                    (numero_atendimento, id_paciente, data_hora_chegada, status)
+                 VALUES (?, ?, NOW(), ?)`,
+                [numero, idPaciente, 'AGUARDANDO_TRIAGEM']
+            );
+
+            return numero;
+
+        } catch (erro) {
+            // Só repete se o erro for número duplicado, e no máximo 5 vezes
+            if (erro.code !== 'ER_DUP_ENTRY' || tentativa === 5) {
+                throw erro;
+            }
+        }
     }
-
-    // Completa com zeros: 1 vira AT0001
-    var numero = 'AT' + String(proximo).padStart(4, '0');
-
-    await conexao.execute(
-        `INSERT INTO atendimento
-            (numero_atendimento, id_paciente, data_hora_chegada, status)
-         VALUES (?, ?, NOW(), ?)`,
-        [numero, idPaciente, 'AGUARDANDO_TRIAGEM']
-    );
-
-    return numero;
 }
 
 // H06.1 - Busca atendimentos pelo número (AT0001) ou pelo CPF do paciente
@@ -92,6 +105,8 @@ async function buscarAtendimentos(numeroOuCpf) {
             a.status AS status,
             a.motivo_cancelamento AS motivoCancelamento,
             a.data_hora_cancelamento AS dataHoraCancelamento,
+            a.observacoes AS observacoes,
+            a.orientacoes AS orientacoes,
             p.id_paciente AS idPaciente,
             p.nome_completo AS nome,
             p.cpf AS cpf
@@ -147,6 +162,7 @@ async function buscarAtendimentoPorNumero(numero) {
             a.status AS status,
             a.data_hora_chegada AS dataHoraChegada,
             a.data_hora_confirmacao AS dataHoraAlta,
+            a.observacoes AS observacoes,
             a.orientacoes AS orientacoes,
             p.id_paciente AS idPaciente,
             p.nome_completo AS nome,
@@ -237,12 +253,13 @@ function enviarArquivo(res, caminho) {
         '/triar-paciente.html': 'triar-paciente.html',
         '/triagem.html': 'triagem.html',
         '/paciente-nao-encontrado.html': 'paciente-nao-encontrado.html',
-        '/script.js': 'JavaScript/script.js',
+        '/script.js': 'javaScript/script.js',
         '/css/geral.css': 'css/geral.css',
         '/css/inicio.css': 'css/inicio.css',
         '/css/recepcao.css': 'css/recepcao.css',
         '/css/triagem.css': 'css/triagem.css',
-        '/css/medico.css': 'css/medico.css'
+        '/css/medico.css': 'css/medico.css',
+        '/image/icon-pronto-socorro.png': 'image/icon-pronto-socorro.png'
     };
 
     if (!paginas[caminho]) {
@@ -1503,13 +1520,20 @@ http.createServer(async function (req, res) {
                 return;
             }
 
+            // Se o front não mandar "observacoes", mantém o texto que já estava salvo
+            var observacoesAlterar = atendimentoAlterar.observacoes;
+
+            if (dadosAlterar.observacoes !== undefined) {
+                observacoesAlterar = String(dadosAlterar.observacoes || '').trim() || null;
+            }
+
             // O status entra no WHERE para não alterar se ele foi encerrado agora há pouco
             const [resultadoAlterar] = await conexao.execute(
                 `UPDATE atendimento
-                 SET id_paciente = ?, data_hora_chegada = ?
+                 SET id_paciente = ?, data_hora_chegada = ?, observacoes = ?
                  WHERE id_atendimento = ?
                    AND status NOT IN ('CONFIRMADO', 'CANCELADO')`,
-                [pacienteNovo.id, chegada, atendimentoAlterar.id]
+                [pacienteNovo.id, chegada, observacoesAlterar, atendimentoAlterar.id]
             );
 
             if (resultadoAlterar.affectedRows === 0) {
