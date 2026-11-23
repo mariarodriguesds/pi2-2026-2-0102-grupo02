@@ -13,7 +13,7 @@ if (!fs.existsSync(path.join(__dirname, '..', 'node_modules'))) {
 // Verifica se existe o arquivo de configuração
 if (!fs.existsSync(path.join(__dirname, 'config.js'))) {
     console.error('Arquivo config.js não encontrado.');
-    console.error('Crie esse arquivo dentro da pasta JavaScript.');
+    console.error('Crie esse arquivo dentro da pasta javascript.');
     process.exit(1);
 }
 
@@ -250,7 +250,7 @@ function enviarArquivo(res, caminho) {
         '/triar-paciente.html': 'triar-paciente.html',
         '/triagem.html': 'triagem.html',
         '/paciente-nao-encontrado.html': 'paciente-nao-encontrado.html',
-        '/script.js': 'JavaScript/script.js',
+        '/script.js': 'javascript/script.js',
         '/css/geral.css': 'css/geral.css',
         '/css/inicio.css': 'css/inicio.css',
         '/css/recepcao.css': 'css/recepcao.css',
@@ -501,6 +501,8 @@ http.createServer(async function (req, res) {
                     WHEN 'VERDE' THEN 4
                     WHEN 'AZUL' THEN 5
                 END,
+                -- Escopo: mesma cor, quem foi triado primeiro vem antes
+                t.data_hora_triagem ASC,
                 a.numero_atendimento ASC
         `;
 
@@ -738,7 +740,7 @@ http.createServer(async function (req, res) {
 
 
     // HXX - Cancela um atendimento com motivo
-    // Só permite cancelar antes de o médico assumir.
+    // Só permite cancelar antes de o médico confirmar.
     if (
         req.method === 'POST' &&
         /^\/api\/atendimentos\/AT\d+\/cancelar$/i.test(caminho)
@@ -795,20 +797,16 @@ http.createServer(async function (req, res) {
 
             var statusAtual = atendimentos[0].status;
 
-            // Só permite cancelar antes de o médico assumir
-            var permitidos = ['ABERTO', 'AGUARDANDO_TRIAGEM', 'AGUARDANDO_MEDICO'];
-
-            // O médico também pode cancelar o que ele está atendendo
-            if (dados.origem === 'medico') {
-                permitidos.push('EM_ATENDIMENTO');
-            }
+            // Escopo: só a Recepção cancela, até o médico confirmar
+            // (inclusive "Em atendimento")
+            var permitidos = ['ABERTO', 'AGUARDANDO_TRIAGEM', 'AGUARDANDO_MEDICO', 'EM_ATENDIMENTO'];
 
             if (!permitidos.includes(statusAtual)) {
 
                 await conexaoCancelamento.rollback();
 
                 responderJSON(res, 409, {
-                    mensagem: 'Não é possível cancelar este atendimento. O médico já assumiu ou o atendimento já foi finalizado.'
+                    mensagem: 'Não é possível cancelar este atendimento. O atendimento já foi confirmado pelo médico ou cancelado.'
                 });
 
                 return;
@@ -1042,8 +1040,7 @@ http.createServer(async function (req, res) {
                         temperatura = ?,
                         batimentos_cardiacos = ?,
                         classificacao_manchester = ?,
-                        principais_queixas = ?,
-                        data_hora_triagem = CURRENT_TIMESTAMP
+                        principais_queixas = ?
                     WHERE id_atendimento = ?`,
                     [
                         pressaoArterial,

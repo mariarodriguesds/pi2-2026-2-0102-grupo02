@@ -19,6 +19,11 @@ a {
     color: inherit;
 }
 
+/* Escondido */
+[hidden] {
+    display: none !important;
+}
+
 /* Barra de cima */
 .barra {
     background: #ffffff;
