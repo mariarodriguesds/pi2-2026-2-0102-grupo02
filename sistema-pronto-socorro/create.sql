@@ -90,6 +90,9 @@ CREATE TABLE medicacao (
 ) ENGINE=InnoDB;
 
 -- Exemplos fictícios para uma instalação nova.
+
+
+/*
 START TRANSACTION;
 INSERT INTO paciente (nome_completo, cpf) VALUES
     ('Paciente Exemplo Um', '00000000001'), ('Paciente Exemplo Dois', '00000000002'),
@@ -110,5 +113,4 @@ INSERT INTO medicacao (id_atendimento, nome)
 SELECT id_atendimento, 'Medicação fictícia de exemplo'
 FROM atendimento WHERE numero_atendimento = 'AT0004';
 COMMIT;
-CREATE INDEX idx_atendimento_classificacao ON atendimento (classificacao_manchester);
-CREATE INDEX idx_atendimento_paciente ON atendimento (id_paciente);
+*/
