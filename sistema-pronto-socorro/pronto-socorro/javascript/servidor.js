@@ -105,8 +105,6 @@ async function buscarAtendimentos(numeroOuCpf) {
             a.status AS status,
             a.motivo_cancelamento AS motivoCancelamento,
             a.data_hora_cancelamento AS dataHoraCancelamento,
-            a.observacoes AS observacoes,
-            a.orientacoes AS orientacoes,
             p.id_paciente AS idPaciente,
             p.nome_completo AS nome,
             p.cpf AS cpf
@@ -162,7 +160,6 @@ async function buscarAtendimentoPorNumero(numero) {
             a.status AS status,
             a.data_hora_chegada AS dataHoraChegada,
             a.data_hora_confirmacao AS dataHoraAlta,
-            a.observacoes AS observacoes,
             a.orientacoes AS orientacoes,
             p.id_paciente AS idPaciente,
             p.nome_completo AS nome,
@@ -253,7 +250,7 @@ function enviarArquivo(res, caminho) {
         '/triar-paciente.html': 'triar-paciente.html',
         '/triagem.html': 'triagem.html',
         '/paciente-nao-encontrado.html': 'paciente-nao-encontrado.html',
-        '/script.js': 'javaScript/script.js',
+        '/script.js': 'JavaScript/script.js',
         '/css/geral.css': 'css/geral.css',
         '/css/inicio.css': 'css/inicio.css',
         '/css/recepcao.css': 'css/recepcao.css',
@@ -1520,20 +1517,13 @@ http.createServer(async function (req, res) {
                 return;
             }
 
-            // Se o front não mandar "observacoes", mantém o texto que já estava salvo
-            var observacoesAlterar = atendimentoAlterar.observacoes;
-
-            if (dadosAlterar.observacoes !== undefined) {
-                observacoesAlterar = String(dadosAlterar.observacoes || '').trim() || null;
-            }
-
             // O status entra no WHERE para não alterar se ele foi encerrado agora há pouco
             const [resultadoAlterar] = await conexao.execute(
                 `UPDATE atendimento
-                 SET id_paciente = ?, data_hora_chegada = ?, observacoes = ?
+                 SET id_paciente = ?, data_hora_chegada = ?
                  WHERE id_atendimento = ?
                    AND status NOT IN ('CONFIRMADO', 'CANCELADO')`,
-                [pacienteNovo.id, chegada, observacoesAlterar, atendimentoAlterar.id]
+                [pacienteNovo.id, chegada, atendimentoAlterar.id]
             );
 
             if (resultadoAlterar.affectedRows === 0) {
