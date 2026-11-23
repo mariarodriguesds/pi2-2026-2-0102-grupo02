@@ -696,6 +696,25 @@ if (botaoCancelarEdicao) {
 
 
 // ============================================================
+// Pinta o selo com a cor da classificação (ex.: VERMELHO -> cor-vermelho)
+// ============================================================
+
+function pintarSelo(selo, classificacao) {
+    if (!selo) {
+        return;
+    }
+
+    selo.classList.remove(
+        "cor-vermelho", "cor-laranja", "cor-amarelo", "cor-verde", "cor-azul"
+    );
+
+    if (classificacao) {
+        selo.classList.add("cor-" + String(classificacao).toLowerCase());
+    }
+}
+
+
+// ============================================================
 // TRIAGEM - classificação (aceita botões de rádio ou select)
 // ============================================================
 
@@ -908,6 +927,8 @@ async function carregarFilaAguardando() {
 
             linha.querySelector(".fila-cor").textContent =
                 atendimento.classificacao;
+
+            pintarSelo(linha.querySelector(".fila-cor"), atendimento.classificacao);
 
             linha.querySelector(".fila-reclassificar").href =
                 "reclassificar.html?numero=" +
@@ -1228,6 +1249,8 @@ async function carregarPainelMedico() {
 
             linha.querySelector(".fila-cor").textContent =
                 atendimento.classificacao;
+
+            pintarSelo(linha.querySelector(".fila-cor"), atendimento.classificacao);
 
             // Coloca o número do atendimento no botão Acessar
             linha.querySelector(".fila-acessar").href =
@@ -2150,6 +2173,7 @@ if (formPrescricao) {
 
         escrever("numeroMedico", atendimento.numero);
         escrever("classificacaoMedico", atendimento.classificacao || "Sem triagem");
+        pintarSelo(document.getElementById("classificacaoMedico"), atendimento.classificacao);
         escrever("nomeMedico", atendimento.nome);
         escrever("cpfMedico", atendimento.cpf);
 
@@ -2448,6 +2472,8 @@ if (formReclassificacao) {
 
             document.getElementById("classificacaoAtual").textContent =
                 atendimento.classificacao || "Sem triagem";
+
+            pintarSelo(document.getElementById("classificacaoAtual"), atendimento.classificacao);
 
             const campoId = document.getElementById("ID_ATENDIMENTO");
 
