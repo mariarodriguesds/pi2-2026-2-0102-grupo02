@@ -738,7 +738,7 @@ http.createServer(async function (req, res) {
 
 
     // HXX - Cancela um atendimento com motivo
-    // Só permite cancelar antes de o médico assumir.
+    // Só permite cancelar antes de o médico confirmar.
     if (
         req.method === 'POST' &&
         /^\/api\/atendimentos\/AT\d+\/cancelar$/i.test(caminho)
@@ -795,20 +795,16 @@ http.createServer(async function (req, res) {
 
             var statusAtual = atendimentos[0].status;
 
-            // Só permite cancelar antes de o médico assumir
-            var permitidos = ['ABERTO', 'AGUARDANDO_TRIAGEM', 'AGUARDANDO_MEDICO'];
-
-            // O médico também pode cancelar o que ele está atendendo
-            if (dados.origem === 'medico') {
-                permitidos.push('EM_ATENDIMENTO');
-            }
+            // Escopo: só a Recepção cancela, até o médico confirmar
+            // (inclusive "Em atendimento")
+            var permitidos = ['ABERTO', 'AGUARDANDO_TRIAGEM', 'AGUARDANDO_MEDICO', 'EM_ATENDIMENTO'];
 
             if (!permitidos.includes(statusAtual)) {
 
                 await conexaoCancelamento.rollback();
 
                 responderJSON(res, 409, {
-                    mensagem: 'Não é possível cancelar este atendimento. O médico já assumiu ou o atendimento já foi finalizado.'
+                    mensagem: 'Não é possível cancelar este atendimento. O atendimento já foi confirmado pelo médico ou cancelado.'
                 });
 
                 return;

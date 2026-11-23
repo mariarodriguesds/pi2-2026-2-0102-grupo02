@@ -78,6 +78,13 @@
     display: none;
 }
 
+/* Resultado com erro */
+#resultado.resultado-erro {
+    background: #fdecee;
+    border-color: #f5c2c7;
+    color: #a4161a;
+}
+
 /* Paciente não encontrado */
 .aviso {
     max-width: 560px;

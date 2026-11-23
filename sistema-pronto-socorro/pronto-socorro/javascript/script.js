@@ -107,8 +107,12 @@ if (formConsulta) {
 
         const cpfLimpo = limparCPF(campoCPFConsulta.value.trim());
 
+        // Começa sem a cor de erro
+        resultado.classList.remove("resultado-erro");
+
         if (!/^\d{11}$/.test(cpfLimpo)) {
 
+            resultado.classList.add("resultado-erro");
             resultado.textContent = "Informe um CPF com 11 dígitos.";
 
             return;
@@ -136,6 +140,7 @@ if (formConsulta) {
 
             if (!resposta.ok) {
 
+                resultado.classList.add("resultado-erro");
                 resultado.textContent =
                     dados.mensagem || "Erro ao consultar paciente.";
 
@@ -168,6 +173,7 @@ if (formConsulta) {
 
         } catch (erro) {
 
+            resultado.classList.add("resultado-erro");
             resultado.textContent = "Erro ao conectar com o servidor.";
 
             console.error("Erro na consulta:", erro);
@@ -216,8 +222,7 @@ if (botaoAbrirAtendimento) {
 
         botaoAbrirAtendimento.disabled = true;
 
-        mensagemAtendimento.textContent =
-            "Abrindo atendimento...";
+        mensagemAtendimento.textContent = "";
 
         try {
 
@@ -246,11 +251,10 @@ if (botaoAbrirAtendimento) {
                 return;
             }
 
-            mensagemAtendimento.textContent =
-                dados.mensagem;
+            // Sucesso aparece na caixa verde, não na vermelha de erro
+            mensagemAtendimento.textContent = "";
 
-            numeroAtendimento.textContent =
-                "Número do atendimento: " + dados.numero;
+            numeroAtendimento.textContent = dados.numero;
 
             atendimentoAberto.hidden = false;
 
@@ -1471,6 +1475,22 @@ const nomesSituacao = {
     CANCELADO: "Cancelado"
 };
 
+// Classe de cor de cada status (fica no recepcao.css)
+const classesSituacao = {
+    ABERTO: "situacao-aberto",
+    AGUARDANDO_TRIAGEM: "situacao-aguardando",
+    AGUARDANDO_MEDICO: "situacao-aguardando",
+    EM_ATENDIMENTO: "situacao-atendimento",
+    CONFIRMADO: "situacao-confirmado",
+    CANCELADO: "situacao-cancelado"
+};
+
+function pintarSituacao(elemento, status) {
+    if (elemento && classesSituacao[status]) {
+        elemento.classList.add(classesSituacao[status]);
+    }
+}
+
 
 // Consulta atendimento pelo número ou CPF
 async function consultarAtendimentos() {
@@ -1531,6 +1551,8 @@ async function consultarAtendimentos() {
             artigo.querySelector(".situacao").textContent =
                 nomesSituacao[atendimento.status] || atendimento.status;
 
+            pintarSituacao(artigo.querySelector(".situacao"), atendimento.status);
+
             artigo.querySelector(".ficha-nome").textContent =
                 atendimento.nome;
 
@@ -1579,9 +1601,9 @@ async function consultarAtendimentos() {
             }
 
 
+            // A recepção cancela até o médico confirmar (inclusive "Em atendimento")
             const statusBloqueadoCancelamento = [
                 "CANCELADO",
-                "EM_ATENDIMENTO",
                 "CONFIRMADO"
             ].includes(atendimento.status);
 
@@ -1615,16 +1637,15 @@ async function consultarAtendimentos() {
                     motivo.hidden = true;
                 }
 
-                // Não permite cancelar depois que o médico assumiu ou finalizou
+                // Não permite cancelar depois que o médico confirmou
                 if (
                     temCancelamento &&
-                    (atendimento.status === "EM_ATENDIMENTO" ||
-                     atendimento.status === "CONFIRMADO")
+                    atendimento.status === "CONFIRMADO"
                 ) {
 
                     botaoCancelar.hidden = true;
                     mensagemRecusa.textContent =
-                        "Não é possível cancelar: o médico já assumiu ou finalizou este atendimento.";
+                        "Não é possível cancelar: o médico já confirmou este atendimento.";
 
                 }
 
@@ -2098,13 +2119,6 @@ if (formPrescricao) {
         );
 
         botaoAlta.disabled = true;
-
-        // Atendimento já encerrado ou indisponível: some o cancelamento
-        const blocoCancelamento = document.getElementById("cancelamentoMedico");
-
-        if (blocoCancelamento) {
-            blocoCancelamento.hidden = true;
-        }
     };
 
     const mostrarAlta = function (dataHora) {
@@ -2597,6 +2611,8 @@ if (formAlterarAtendimento) {
         document.getElementById("situacaoAlteracao").textContent =
             nomesSituacao[atendimento.status] || atendimento.status;
 
+        pintarSituacao(document.getElementById("situacaoAlteracao"), atendimento.status);
+
         campoCPFAlteracao.value = atendimento.cpf;
 
         // O campo datetime-local quer "AAAA-MM-DDTHH:MM"
@@ -2694,105 +2710,4 @@ if (formAlterarAtendimento) {
     });
 
     carregarAlteracao();
-}
-
-
-// ============================================================
-// CANCELAR ATENDIMENTO PELO MÉDICO (atendimento-medico.html)
-// Pede o motivo e volta para o painel do médico
-// ============================================================
-
-const cancelamentoMedico = document.getElementById("cancelamentoMedico");
-
-if (cancelamentoMedico) {
-
-    const numeroCancelarMedico =
-        new URLSearchParams(window.location.search).get("numero") || "";
-
-    const botaoAbrirCancelamento =
-        document.getElementById("botaoAbrirCancelamento");
-
-    const formCancelamentoMedico =
-        document.getElementById("formCancelamentoMedico");
-
-    const campoMotivoMedico =
-        document.getElementById("motivoCancelamentoMedico");
-
-    const botaoVoltarCancelamento =
-        document.getElementById("botaoVoltarCancelamento");
-
-    const mensagemCancelamentoMedico =
-        document.getElementById("mensagemCancelamentoMedico");
-
-    botaoAbrirCancelamento.addEventListener("click", function () {
-
-        formCancelamentoMedico.hidden = false;
-
-        botaoAbrirCancelamento.hidden = true;
-
-        campoMotivoMedico.focus();
-    });
-
-    botaoVoltarCancelamento.addEventListener("click", function () {
-
-        formCancelamentoMedico.hidden = true;
-
-        botaoAbrirCancelamento.hidden = false;
-
-        campoMotivoMedico.value = "";
-
-        mostrarMensagem(mensagemCancelamentoMedico, "");
-    });
-
-    formCancelamentoMedico.addEventListener("submit", async function (evento) {
-
-        evento.preventDefault();
-
-        const motivo = campoMotivoMedico.value.trim();
-
-        if (!motivo) {
-            mostrarMensagem(
-                mensagemCancelamentoMedico,
-                "Informe o motivo do cancelamento."
-            );
-            campoMotivoMedico.focus();
-            return;
-        }
-
-        if (!confirm("Cancelar este atendimento? Essa ação não pode ser desfeita.")) {
-            return;
-        }
-
-        const botaoConfirmarCancelamento =
-            formCancelamentoMedico.querySelector('button[type="submit"]');
-
-        botaoConfirmarCancelamento.disabled = true;
-
-        mostrarMensagem(mensagemCancelamentoMedico, "Cancelando...");
-
-        try {
-            await enviarJSON(
-                "/api/atendimentos/" +
-                encodeURIComponent(numeroCancelarMedico) + "/cancelar",
-                "POST",
-                { motivo: motivo, origem: "medico" }
-            );
-
-            mostrarMensagem(
-                mensagemCancelamentoMedico,
-                "Atendimento cancelado com sucesso!"
-            );
-
-            setTimeout(function () {
-                window.location.href = "medico.html";
-            }, 1000);
-
-        } catch (erro) {
-            console.error("Erro ao cancelar atendimento:", erro);
-
-            mostrarMensagem(mensagemCancelamentoMedico, erro.message);
-
-            botaoConfirmarCancelamento.disabled = false;
-        }
-    });
 }
